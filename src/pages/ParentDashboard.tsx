@@ -16,6 +16,15 @@ interface Slot {
   halfDay: string;
   slotType: 'OPEN' | 'DOUBLE_PERM' | 'CLOSED';
   availabilities: { isAvailable: boolean }[];
+  assignments?: {
+    id: string;
+    isManual: boolean;
+    parent: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    };
+  }[];
 }
 
 interface Week {
@@ -37,7 +46,14 @@ export default function ParentDashboard() {
   const [childrenList, setChildrenList] = useState<Child[]>([]);
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   
-  const [openWeek, setOpenWeek] = useState<Week | null>(null);
+  const [openWeek, setOpenWeek] = useState<Week | null>(null); // For the child-specific availability form
+  const [globalPlanning, setGlobalPlanning] = useState<Week | null>(null); // For the global view
+  
+  const [availableGlobalWeeks, setAvailableGlobalWeeks] = useState<Week[]>([]);
+  const [availableFormWeeks, setAvailableFormWeeks] = useState<Week[]>([]);
+  const [selectedGlobalWeekId, setSelectedGlobalWeekId] = useState<string>('');
+  const [selectedFormWeekId, setSelectedFormWeekId] = useState<string>('');
+  
   const [availabilities, setAvailabilities] = useState<Record<string, SlotStatus>>({});
   
   const [loadingList, setLoadingList] = useState(true);
@@ -57,9 +73,16 @@ export default function ParentDashboard() {
         
         setChildrenList(childrenRes.data);
         
-        const week = weeksRes.data.find((w: Week) => w.status === 'OPEN_TO_PARENTS' || w.status === 'CALCULATION');
-        if (week) {
-          setOpenWeek(week as Week);
+        const globalWeeks = weeksRes.data.filter((w: Week) => ['PUBLISHED'].includes(w.status));
+        setAvailableGlobalWeeks(globalWeeks);
+        if (globalWeeks.length > 0) {
+          setSelectedGlobalWeekId(globalWeeks[0].id);
+        }
+
+        const formWeeks = weeksRes.data.filter((w: Week) => w.status === 'OPEN_TO_PARENTS');
+        setAvailableFormWeeks(formWeeks);
+        if (formWeeks.length > 0) {
+          setSelectedFormWeekId(formWeeks[0].id);
         }
       } catch (err) {
         console.error(err);
@@ -71,21 +94,19 @@ export default function ParentDashboard() {
   }, []);
 
   // 2. When a child is selected, fetch the planning specific to their family
-  const handleSelectChild = useCallback(async (child: Child) => {
-    setSelectedChild(child);
-    if (!openWeek) return;
-    
+  const loadChildPlanning = useCallback(async (child: Child, weekId: string) => {
+    if (!weekId) return;
     setLoadingGrid(true);
     setError('');
     setSuccess('');
     try {
-      const planningRes = await apiClient.get(`/planning/${openWeek.id}?childId=${child.id}`);
+      const planningRes = await apiClient.get(`/planning/${weekId}?childId=${child.id}`);
       
       const initialAvails: Record<string, SlotStatus> = {};
       planningRes.data.slots.forEach((s: Slot) => {
         const isEnrolled = child.defaultPresences?.some(dp => dp.dayOfWeek === s.dayOfWeek && dp.halfDay === s.halfDay) ?? true;
         if (s.slotType !== 'CLOSED' && isEnrolled) {
-          initialAvails[s.id] = s.availabilities.length > 0 && s.availabilities[0].isAvailable ? 'AVAILABLE' : 'UNAVAILABLE';
+          initialAvails[s.id] = s.availabilities?.length > 0 && s.availabilities[0].isAvailable ? 'AVAILABLE' : 'UNAVAILABLE';
         }
       });
       setAvailabilities(initialAvails);
@@ -96,7 +117,28 @@ export default function ParentDashboard() {
     } finally {
       setLoadingGrid(false);
     }
-  }, [openWeek]);
+  }, []);
+
+  const handleSelectChild = useCallback((child: Child) => {
+    setSelectedChild(child);
+    if (selectedFormWeekId) {
+      loadChildPlanning(child, selectedFormWeekId);
+    }
+  }, [selectedFormWeekId, loadChildPlanning]);
+
+  useEffect(() => {
+    if (selectedChild && selectedFormWeekId) {
+      loadChildPlanning(selectedChild, selectedFormWeekId);
+    }
+  }, [selectedFormWeekId, selectedChild, loadChildPlanning]);
+
+  useEffect(() => {
+    if (selectedGlobalWeekId) {
+      apiClient.get(`/planning/${selectedGlobalWeekId}`)
+        .then(res => setGlobalPlanning(res.data))
+        .catch(e => console.error("Erreur chargement planning global", e));
+    }
+  }, [selectedGlobalWeekId]);
 
   const handleCycleStatus = (slotId: string) => {
     setAvailabilities(prev => {
@@ -177,6 +219,82 @@ export default function ParentDashboard() {
             ))}
           </div>
         )}
+
+        {/* Vue Globale du Planning */}
+        {availableGlobalWeeks.length > 0 && globalPlanning ? (
+          <div className="glass-card" style={{ marginTop: '3rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                <Calendar size={20} /> Planning Global
+              </h3>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <select 
+                  value={selectedGlobalWeekId} 
+                  onChange={(e) => setSelectedGlobalWeekId(e.target.value)}
+                  style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-glass-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                >
+                  {availableGlobalWeeks.map(w => (
+                    <option key={w.id} value={w.id}>Semaine {w.weekNumber} ({w.year})</option>
+                  ))}
+                </select>
+
+                {globalPlanning.status === 'PUBLISHED' ? (
+                  <span className="badge badge-success">Publié</span>
+                ) : (
+                  <span className="badge badge-warning">En cours d'élaboration</span>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: globalPlanning.status === 'PUBLISHED' ? 1 : 0.6 }}>
+              {DAYS.map(day => (
+                <div key={day} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr', gap: '1rem', alignItems: 'start', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
+                  <strong style={{ fontSize: '1.1rem', paddingTop: '0.2rem' }}>{DAY_LABELS[day]}</strong>
+                  
+                  {HALF_DAYS.map(halfDay => {
+                    const slot = globalPlanning.slots.find(s => s.dayOfWeek === day && s.halfDay === halfDay);
+                    if (!slot) return <div key={halfDay}>-</div>;
+
+                    const isClosed = slot.slotType === 'CLOSED';
+                    const isDouble = slot.slotType === 'DOUBLE_PERM';
+
+                    return (
+                      <div key={slot.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>{HALF_DAY_LABELS[halfDay]}</span>
+                        
+                        <div 
+                          className={`btn ${isClosed ? 'btn-outline' : globalPlanning.status === 'PUBLISHED' ? 'btn-primary' : 'btn-outline'}`}
+                          style={{ 
+                            justifyContent: 'center',
+                            borderColor: isClosed ? 'var(--color-secondary)' : undefined,
+                            color: isClosed ? 'var(--color-secondary)' : undefined,
+                            cursor: 'default',
+                            fontWeight: globalPlanning.status === 'PUBLISHED' && !isClosed && slot.assignments?.length ? 600 : undefined
+                          }}
+                        >
+                          {isClosed && 'Fermé'}
+                          {!isClosed && globalPlanning.status === 'PUBLISHED' && (
+                            <>
+                              {slot.assignments && slot.assignments.length > 0 
+                                ? slot.assignments.map(a => `${a.parent.firstName} ${a.parent.lastName}`.trim()).join(' & ')
+                                : '✗ Non rempli'}
+                            </>
+                          )}
+                          {!isClosed && globalPlanning.status !== 'PUBLISHED' && (
+                            <>
+                              {isDouble ? 'Double Perm (à définir)' : 'Normal (à définir)'}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -196,19 +314,30 @@ export default function ParentDashboard() {
       </div>
 
       <div className="glass-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h3>Disponibilités</h3>
-          {!openWeek ? (
-            <span className="badge badge-warning">En attente</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
+          <h3 style={{ margin: 0 }}>Disponibilités</h3>
+          {availableFormWeeks.length > 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <select 
+                value={selectedFormWeekId} 
+                onChange={(e) => setSelectedFormWeekId(e.target.value)}
+                style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-glass-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+              >
+                {availableFormWeeks.map(w => (
+                  <option key={w.id} value={w.id}>Semaine {w.weekNumber} ({w.year})</option>
+                ))}
+              </select>
+              <span className="badge badge-success">Saisie Ouverte</span>
+            </div>
           ) : (
-            <span className="badge badge-success">Saisie Ouverte (Semaine {openWeek.weekNumber})</span>
+            <span className="badge badge-warning">Aucune saisie ouverte</span>
           )}
         </div>
         
         {error && <div style={{ backgroundColor: 'rgba(244,63,94,0.1)', color: 'var(--color-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>{error}</div>}
         {success && <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: 'var(--color-success)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle2 size={18} /> {success}</div>}
 
-        {!openWeek ? (
+        {!openWeek || availableFormWeeks.length === 0 ? (
           <div style={{ border: '2px dashed var(--color-glass-border)', borderRadius: 'var(--radius-lg)', padding: '3rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
             <Calendar size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
             <p style={{ fontWeight: 500, marginBottom: '1rem' }}>Aucune semaine n'est actuellement ouverte à la saisie des disponibilités.</p>

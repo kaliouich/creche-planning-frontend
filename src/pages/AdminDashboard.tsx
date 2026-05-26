@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { Plus, ArrowRight, Users, Baby, TrendingUp, Loader2, Trash2, Settings } from 'lucide-react';
@@ -42,8 +42,35 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
+  const [selectedWeekToCreate, setSelectedWeekToCreate] = useState<string>('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const upcomingWeeks = useMemo(() => {
+    const weeksList = [];
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const pastDays = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000);
+    const currentWeekNumber = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+    const year = now.getFullYear();
+
+    for (let i = 0; i < 13; i++) {
+      let weekNum = currentWeekNumber + i;
+      let wYear = year;
+      if (weekNum > 52) {
+        weekNum -= 52;
+        wYear += 1;
+      }
+      weeksList.push({ weekNumber: weekNum, year: wYear });
+    }
+    return weeksList;
+  }, []);
+
+  useEffect(() => {
+    if (upcomingWeeks.length > 0 && !selectedWeekToCreate) {
+      setSelectedWeekToCreate(`${upcomingWeeks[0].year}-${upcomingWeeks[0].weekNumber}`);
+    }
+  }, [upcomingWeeks, selectedWeekToCreate]);
 
   const fetchWeeks = useCallback(async () => {
     try {
@@ -61,18 +88,18 @@ export default function AdminDashboard() {
   }, [fetchWeeks]);
 
   const handleCreateWeek = async () => {
+    if (!selectedWeekToCreate) return;
     setCreating(true);
     setError('');
-    // Auto-calculate current ISO week number
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const pastDays = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000);
-    const weekNumber = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+    
+    const [yearStr, weekStr] = selectedWeekToCreate.split('-');
+    const weekNumber = parseInt(weekStr, 10);
+    const year = parseInt(yearStr, 10);
     
     try {
       const response = await apiClient.post('/weeks', {
         weekNumber,
-        year: now.getFullYear(),
+        year,
       });
       setWeeks(prev => [response.data, ...prev]);
     } catch (err: unknown) {
@@ -159,7 +186,7 @@ export default function AdminDashboard() {
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1>Espace Coordinateur</h1>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <button 
             className="btn btn-outline" 
             onClick={() => navigate('/admin/children')}
@@ -167,15 +194,29 @@ export default function AdminDashboard() {
             <Baby size={20} />
             Gérer les enfants
           </button>
-          <button 
-            id="create-week-btn"
-            className="btn btn-primary" 
-            onClick={handleCreateWeek}
-            disabled={creating}
-          >
-            {creating ? <Loader2 size={20} className="spin" /> : <Plus size={20} />}
-            {creating ? 'Création...' : 'Créer une semaine'}
-          </button>
+          
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: 'var(--radius-md)' }}>
+            <select
+              value={selectedWeekToCreate}
+              onChange={(e) => setSelectedWeekToCreate(e.target.value)}
+              style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-glass-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+            >
+              {upcomingWeeks.map((w: { year: number, weekNumber: number }) => (
+                <option key={`${w.year}-${w.weekNumber}`} value={`${w.year}-${w.weekNumber}`}>
+                  Semaine {w.weekNumber} ({w.year})
+                </option>
+              ))}
+            </select>
+            <button 
+              id="create-week-btn"
+              className="btn btn-primary" 
+              onClick={handleCreateWeek}
+              disabled={creating}
+            >
+              {creating ? <Loader2 size={20} className="spin" /> : <Plus size={20} />}
+              {creating ? 'Création...' : 'Créer'}
+            </button>
+          </div>
         </div>
       </div>
 

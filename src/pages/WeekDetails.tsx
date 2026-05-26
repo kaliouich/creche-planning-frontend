@@ -144,8 +144,8 @@ export default function WeekDetails() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {DAYS.map(day => (
-            <div key={day} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr', gap: '1rem', alignItems: 'center', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
-              <strong style={{ fontSize: '1.1rem' }}>{DAY_LABELS[day]}</strong>
+            <div key={day} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr', gap: '1rem', alignItems: 'start', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
+              <strong style={{ fontSize: '1.1rem', paddingTop: '0.2rem' }}>{DAY_LABELS[day]}</strong>
               
               {HALF_DAYS.map(halfDay => {
                 const slot = week.slots.find(s => s.dayOfWeek === day && s.halfDay === halfDay);
