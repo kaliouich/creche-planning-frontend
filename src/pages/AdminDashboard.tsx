@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { Plus, ArrowRight, Users, Baby, TrendingUp, Loader2, Trash2, Settings } from 'lucide-react';
+import { getWeekDateRange } from '../utils/date';
 
 interface Week {
   id: string;
@@ -43,6 +44,7 @@ export default function AdminDashboard() {
   const [creating, setCreating] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
   const [selectedWeekToCreate, setSelectedWeekToCreate] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'ONGOING' | 'PUBLISHED'>('ONGOING');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -203,7 +205,7 @@ export default function AdminDashboard() {
             >
               {upcomingWeeks.map((w: { year: number, weekNumber: number }) => (
                 <option key={`${w.year}-${w.weekNumber}`} value={`${w.year}-${w.weekNumber}`}>
-                  Semaine {w.weekNumber} ({w.year})
+                  Semaine {w.weekNumber} ({getWeekDateRange(w.weekNumber, w.year)})
                 </option>
               ))}
             </select>
@@ -233,21 +235,38 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {weeks.length === 0 ? (
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
+        <button 
+          className={`btn ${activeTab === 'ONGOING' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setActiveTab('ONGOING')}
+          style={{ padding: '0.5rem 1.5rem' }}
+        >
+          Semaines en cours
+        </button>
+        <button 
+          className={`btn ${activeTab === 'PUBLISHED' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setActiveTab('PUBLISHED')}
+          style={{ padding: '0.5rem 1.5rem' }}
+        >
+          Semaines publiées
+        </button>
+      </div>
+
+      {weeks.filter(w => activeTab === 'ONGOING' ? w.status !== 'PUBLISHED' : w.status === 'PUBLISHED').length === 0 ? (
         <div className="glass-card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
           <Baby size={64} style={{ color: 'var(--color-text-secondary)', opacity: 0.4, margin: '0 auto 1rem' }} />
           <h3 style={{ marginBottom: '0.5rem' }}>Aucune semaine créée</h3>
           <p style={{ color: 'var(--color-text-secondary)' }}>
-            Cliquez sur "Créer une semaine" pour démarrer la planification.
+            {activeTab === 'ONGOING' ? 'Cliquez sur "Créer" pour démarrer la planification d\'une nouvelle semaine.' : 'Aucune semaine n\'a encore été publiée.'}
           </p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-          {weeks.map(week => (
+          {weeks.filter(w => activeTab === 'ONGOING' ? w.status !== 'PUBLISHED' : w.status === 'PUBLISHED').map(week => (
             <div key={week.id} className="glass-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <div>
-                  <h3 style={{ marginBottom: '0.5rem' }}>Semaine {week.weekNumber} — {week.year}</h3>
+                  <h3 style={{ marginBottom: '0.5rem' }}>Semaine {week.weekNumber} <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', fontWeight: 400 }}>({getWeekDateRange(week.weekNumber, week.year)})</span></h3>
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <span className={`badge ${STATUS_BADGE[week.status] || 'badge-warning'}`}>
                       {STATUS_LABELS[week.status] || week.status}
@@ -275,7 +294,11 @@ export default function AdminDashboard() {
                 onClick={() => navigate(`/admin/weeks/${week.id}`)}
               >
                 <Settings size={18} />
-                {(week.status === 'CALCULATION' || week.status === 'PUBLISHED') ? 'Voir le planning' : 'Configurer les créneaux'}
+                {week.status === 'PREPARATION' 
+                  ? 'Configurer les créneaux' 
+                  : week.status === 'OPEN_TO_PARENTS'
+                    ? 'Consulter le remplissage'
+                    : 'Voir le planning'}
               </button>
 
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>

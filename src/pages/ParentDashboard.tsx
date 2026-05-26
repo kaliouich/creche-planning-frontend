@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../api/client';
 import { Calendar, Loader2, Save, CheckCircle2, Baby, ArrowLeft } from 'lucide-react';
+import { getWeekDateRange } from '../utils/date';
 
 
 interface Child {
@@ -235,7 +236,7 @@ export default function ParentDashboard() {
                   style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-glass-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
                 >
                   {availableGlobalWeeks.map(w => (
-                    <option key={w.id} value={w.id}>Semaine {w.weekNumber} ({w.year})</option>
+                    <option key={w.id} value={w.id}>Semaine {w.weekNumber} ({getWeekDateRange(w.weekNumber, w.year)})</option>
                   ))}
                 </select>
 
@@ -324,7 +325,7 @@ export default function ParentDashboard() {
                 style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-glass-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
               >
                 {availableFormWeeks.map(w => (
-                  <option key={w.id} value={w.id}>Semaine {w.weekNumber} ({w.year})</option>
+                  <option key={w.id} value={w.id}>Semaine {w.weekNumber} ({getWeekDateRange(w.weekNumber, w.year)})</option>
                 ))}
               </select>
               <span className="badge badge-success">Saisie Ouverte</span>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { Loader2, ArrowLeft, Calendar, ShieldBan, Users } from 'lucide-react';
+import { getWeekDateRange } from '../utils/date';
 
 interface Assignment {
   id: string;
@@ -83,7 +84,7 @@ export default function WeekDetails() {
   }, [id]);
 
   const handleToggleSlotType = async (slot: Slot) => {
-    if (!week || week.status === 'CALCULATION' || week.status === 'PUBLISHED') return;
+    if (!week || week.status !== 'PREPARATION') return;
 
     // Cycle: OPEN -> DOUBLE_PERM -> CLOSED -> OPEN
     let nextType = 'OPEN';
@@ -109,21 +110,19 @@ export default function WeekDetails() {
   if (loading) return <div className="flex-center" style={{ padding: '4rem' }}><Loader2 size={32} className="spin" style={{ color: 'var(--color-primary)' }} /></div>;
   if (!week) return <div className="animate-fade-in"><h3>Semaine introuvable</h3></div>;
 
-  const isEditable = week.status === 'PREPARATION' || week.status === 'OPEN_TO_PARENTS';
+  const isEditable = week.status === 'PREPARATION';
 
   return (
     <div className="animate-fade-in">
-      <button className="btn btn-outline" style={{ marginBottom: '2rem' }} onClick={() => navigate('/')}>
-        <ArrowLeft size={18} /> Retour au tableau de bord
-      </button>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h1>Configuration Semaine {week.weekNumber}</h1>
-          <p style={{ color: 'var(--color-text-secondary)' }}>Année {week.year}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+          <button className="btn btn-outline" onClick={() => navigate('/')}>
+            <ArrowLeft size={20} /> Retour
+          </button>
+          <h1 style={{ margin: 0, fontSize: '1.8rem' }}>
+            Semaine {week.weekNumber} <span style={{ fontSize: '1.2rem', color: 'var(--color-text-secondary)', fontWeight: 400 }}>({getWeekDateRange(week.weekNumber, week.year)})</span>
+          </h1>
+          <span className="badge badge-warning" style={{ marginLeft: 'auto' }}>{week.status}</span>
         </div>
-        <span className="badge badge-warning">{week.status}</span>
-      </div>
 
       {error && (
         <div style={{ backgroundColor: 'rgba(244, 63, 94, 0.1)', color: 'var(--color-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
