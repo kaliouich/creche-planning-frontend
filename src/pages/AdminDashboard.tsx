@@ -1,0 +1,287 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { apiClient } from '../api/client';
+import { Plus, ArrowRight, Users, Baby, TrendingUp, Loader2, Trash2, Settings } from 'lucide-react';
+
+interface Week {
+  id: string;
+  weekNumber: number;
+  year: number;
+  status: string;
+  needsRecalculation: boolean;
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  PREPARATION: 'En Préparation',
+  OPEN_TO_PARENTS: 'Ouvert aux Parents',
+  CALCULATION: 'Calcul en Cours',
+  PUBLISHED: 'Publié',
+};
+
+const STATUS_BADGE: Record<string, string> = {
+  PREPARATION: 'badge-warning',
+  OPEN_TO_PARENTS: 'badge-success',
+  CALCULATION: 'badge-warning',
+  PUBLISHED: 'badge-success',
+};
+
+const NEXT_STATUS: Record<string, string> = {
+  PREPARATION: 'OPEN_TO_PARENTS',
+  OPEN_TO_PARENTS: 'CALCULATION',
+  CALCULATION: 'PUBLISHED',
+};
+
+const NEXT_STATUS_LABEL: Record<string, string> = {
+  PREPARATION: 'Ouvrir aux Parents',
+  OPEN_TO_PARENTS: 'Lancer le Calcul',
+  CALCULATION: 'Publier',
+};
+
+export default function AdminDashboard() {
+  const [weeks, setWeeks] = useState<Week[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [generating, setGenerating] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const fetchWeeks = useCallback(async () => {
+    try {
+      const response = await apiClient.get('/weeks');
+      setWeeks(response.data);
+    } catch (err: unknown) {
+      console.error("Erreur récupération semaines:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchWeeks();
+  }, [fetchWeeks]);
+
+  const handleCreateWeek = async () => {
+    setCreating(true);
+    setError('');
+    // Auto-calculate current ISO week number
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const pastDays = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000);
+    const weekNumber = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+    
+    try {
+      const response = await apiClient.post('/weeks', {
+        weekNumber,
+        year: now.getFullYear(),
+      });
+      setWeeks(prev => [response.data, ...prev]);
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { error?: string } } };
+        setError(axiosErr.response?.data?.error || 'Erreur lors de la création');
+      } else {
+        setError('Erreur réseau');
+      }
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleAdvanceStatus = async (week: Week) => {
+    const nextStatus = NEXT_STATUS[week.status];
+    if (!nextStatus) return;
+
+    // If transitioning to CALCULATION, we need to generate the planning first
+    if (nextStatus === 'CALCULATION') {
+      // Just advance the status, the admin will then trigger generation
+      try {
+        const response = await apiClient.patch(`/weeks/${week.id}/status`, { status: nextStatus });
+        setWeeks(prev => prev.map(w => w.id === week.id ? { ...w, status: response.data.status } : w));
+      } catch (err: unknown) {
+        if (err && typeof err === 'object' && 'response' in err) {
+          const axiosErr = err as { response?: { data?: { error?: string } } };
+          setError(axiosErr.response?.data?.error || 'Erreur lors de la transition');
+        }
+      }
+      return;
+    }
+
+    try {
+      const response = await apiClient.patch(`/weeks/${week.id}/status`, { status: nextStatus });
+      setWeeks(prev => prev.map(w => w.id === week.id ? { ...w, status: response.data.status } : w));
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { error?: string } } };
+        setError(axiosErr.response?.data?.error || 'Erreur lors de la transition');
+      }
+    }
+  };
+
+  const handleGenerate = async (weekId: string) => {
+    setGenerating(weekId);
+    setError('');
+    try {
+      await apiClient.post(`/planning/generate/${weekId}`);
+      navigate(`/admin/weeks/${weekId}`);
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { error?: string } } };
+        setError(axiosErr.response?.data?.error || 'Erreur lors de la génération');
+      }
+    } finally {
+      setGenerating(null);
+    }
+  };
+
+  const handleDelete = async (weekId: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette semaine et tout son planning ?")) return;
+    
+    try {
+      await apiClient.delete(`/weeks/${weekId}`);
+      setWeeks(prev => prev.filter(w => w.id !== weekId));
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { error?: string } } };
+        setError(axiosErr.response?.data?.error || 'Erreur lors de la suppression');
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex-center" style={{ padding: '4rem' }}>
+        <Loader2 size={32} className="spin" style={{ color: 'var(--color-primary)' }} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-fade-in">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h1>Espace Coordinateur</h1>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            className="btn btn-outline" 
+            onClick={() => navigate('/admin/children')}
+          >
+            <Baby size={20} />
+            Gérer les enfants
+          </button>
+          <button 
+            id="create-week-btn"
+            className="btn btn-primary" 
+            onClick={handleCreateWeek}
+            disabled={creating}
+          >
+            {creating ? <Loader2 size={20} className="spin" /> : <Plus size={20} />}
+            {creating ? 'Création...' : 'Créer une semaine'}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div style={{ 
+          backgroundColor: 'rgba(244, 63, 94, 0.1)', 
+          color: 'var(--color-secondary)', 
+          padding: '1rem', 
+          borderRadius: 'var(--radius-md)',
+          marginBottom: '1.5rem',
+          fontWeight: 500
+        }}>
+          {error}
+        </div>
+      )}
+
+      {weeks.length === 0 ? (
+        <div className="glass-card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <Baby size={64} style={{ color: 'var(--color-text-secondary)', opacity: 0.4, margin: '0 auto 1rem' }} />
+          <h3 style={{ marginBottom: '0.5rem' }}>Aucune semaine créée</h3>
+          <p style={{ color: 'var(--color-text-secondary)' }}>
+            Cliquez sur "Créer une semaine" pour démarrer la planification.
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          {weeks.map(week => (
+            <div key={week.id} className="glass-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                <div>
+                  <h3 style={{ marginBottom: '0.5rem' }}>Semaine {week.weekNumber} — {week.year}</h3>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span className={`badge ${STATUS_BADGE[week.status] || 'badge-warning'}`}>
+                      {STATUS_LABELS[week.status] || week.status}
+                    </span>
+                    {(week.status === 'CALCULATION' && week.needsRecalculation) && (
+                      <span className="badge badge-error" style={{ backgroundColor: 'var(--color-secondary)', color: 'white', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        ⚠️ À recalculer
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button 
+                  className="btn btn-outline" 
+                  style={{ padding: '0.4rem', color: 'var(--color-secondary)', borderColor: 'var(--color-secondary)' }}
+                  onClick={() => handleDelete(week.id)}
+                  title="Supprimer la semaine"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+
+              <button 
+                className="btn btn-outline" 
+                style={{ width: '100%', marginBottom: '1rem', justifyContent: 'center' }}
+                onClick={() => navigate(`/admin/weeks/${week.id}`)}
+              >
+                <Settings size={18} />
+                {(week.status === 'CALCULATION' || week.status === 'PUBLISHED') ? 'Voir le planning' : 'Configurer les créneaux'}
+              </button>
+
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {NEXT_STATUS[week.status] && (
+                  <button 
+                    id={`advance-${week.id}`}
+                    className="btn btn-primary" 
+                    style={{ flex: 1 }}
+                    onClick={() => handleAdvanceStatus(week)}
+                  >
+                    <ArrowRight size={18} />
+                    {NEXT_STATUS_LABEL[week.status]}
+                  </button>
+                )}
+                
+                {week.status === 'CALCULATION' && (
+                  <button 
+                    id={`generate-${week.id}`}
+                    className={`btn ${week.needsRecalculation ? 'btn-primary' : 'btn-outline'}`}
+                    style={{ flex: 1 }}
+                    onClick={() => handleGenerate(week.id)}
+                    disabled={generating === week.id}
+                  >
+                    {generating === week.id ? <Loader2 size={18} className="spin" /> : <TrendingUp size={18} />}
+                    {generating === week.id ? 'Génération...' : 'Générer Planning'}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Quick stats card */}
+          <div className="glass-card">
+            <h3 style={{ marginBottom: '1rem' }}>Aperçu Rapide</h3>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <li style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid var(--color-glass-border)' }}>
+                <span><Users size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />Semaines créées</span>
+                <strong>{weeks.length}</strong>
+              </li>
+              <li style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span><Baby size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />Dernière action</span>
+                <strong style={{ color: 'var(--color-success)' }}>Prête</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
