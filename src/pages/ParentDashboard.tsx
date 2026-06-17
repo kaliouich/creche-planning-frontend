@@ -80,7 +80,7 @@ export default function ParentDashboard() {
           setSelectedGlobalWeekId(globalWeeks[0].id);
         }
 
-        const formWeeks = weeksRes.data.filter((w: Week) => w.status === 'OPEN_TO_PARENTS');
+        const formWeeks = weeksRes.data.filter((w: Week) => w.status !== 'PUBLISHED');
         setAvailableFormWeeks(formWeeks);
         if (formWeeks.length > 0) {
           setSelectedFormWeekId(formWeeks[0].id);
