@@ -15,27 +15,23 @@ interface Week {
 const STATUS_LABELS: Record<string, string> = {
   PREPARATION: 'En Préparation',
   OPEN_TO_PARENTS: 'Ouvert aux Parents',
-  CALCULATION: 'Calcul en Cours',
   PUBLISHED: 'Publié',
 };
 
 const STATUS_BADGE: Record<string, string> = {
   PREPARATION: 'badge-warning',
   OPEN_TO_PARENTS: 'badge-success',
-  CALCULATION: 'badge-warning',
   PUBLISHED: 'badge-success',
 };
 
 const NEXT_STATUS: Record<string, string> = {
   PREPARATION: 'OPEN_TO_PARENTS',
-  OPEN_TO_PARENTS: 'CALCULATION',
-  CALCULATION: 'PUBLISHED',
+  OPEN_TO_PARENTS: 'PUBLISHED',
 };
 
 const NEXT_STATUS_LABEL: Record<string, string> = {
   PREPARATION: 'Ouvrir aux Parents',
-  OPEN_TO_PARENTS: 'Lancer le Calcul',
-  CALCULATION: 'Publier',
+  OPEN_TO_PARENTS: 'Publier',
 };
 
 export default function AdminDashboard() {
@@ -120,20 +116,8 @@ export default function AdminDashboard() {
     const nextStatus = NEXT_STATUS[week.status];
     if (!nextStatus) return;
 
-    // If transitioning to CALCULATION, we need to generate the planning first
-    if (nextStatus === 'CALCULATION') {
-      // Just advance the status, the admin will then trigger generation
-      try {
-        const response = await apiClient.patch(`/weeks/${week.id}/status`, { status: nextStatus });
-        setWeeks(prev => prev.map(w => w.id === week.id ? { ...w, status: response.data.status } : w));
-      } catch (err: unknown) {
-        if (err && typeof err === 'object' && 'response' in err) {
-          const axiosErr = err as { response?: { data?: { error?: string } } };
-          setError(axiosErr.response?.data?.error || 'Erreur lors de la transition');
-        }
-      }
-      return;
-    }
+    // Pas besoin d'intercepter la transition vers CALCULATION puisqu'elle a été supprimée
+
 
     try {
       const response = await apiClient.patch(`/weeks/${week.id}/status`, { status: nextStatus });
@@ -271,7 +255,7 @@ export default function AdminDashboard() {
                     <span className={`badge ${STATUS_BADGE[week.status] || 'badge-warning'}`}>
                       {STATUS_LABELS[week.status] || week.status}
                     </span>
-                    {(week.status === 'CALCULATION' && week.needsRecalculation) && (
+                    {(week.status === 'OPEN_TO_PARENTS' && week.needsRecalculation) && (
                       <span className="badge badge-error" style={{ backgroundColor: 'var(--color-secondary)', color: 'white', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         ⚠️ À recalculer
                       </span>
@@ -314,7 +298,7 @@ export default function AdminDashboard() {
                   </button>
                 )}
                 
-                {week.status === 'CALCULATION' && (
+                {week.status === 'OPEN_TO_PARENTS' && (
                   <button 
                     id={`generate-${week.id}`}
                     className={`btn ${week.needsRecalculation ? 'btn-primary' : 'btn-outline'}`}
