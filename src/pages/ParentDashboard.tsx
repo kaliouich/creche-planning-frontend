@@ -160,9 +160,7 @@ export default function ParentDashboard() {
   }, [selectedGlobalWeekId]);
 
   const handleCycleStatus = (slotId: string) => {
-    if (selectedChild?.parentId !== loggedInUserId) return; // Lecture seule
-
-    setSuccess(''); // Masquer le message de succès si on modifie une valeur
+    setSuccess(''); 
     setAvailabilities(prev => {
       const current = prev[slotId];
       if (current === 'UNAVAILABLE') return { ...prev, [slotId]: 'AVAILABLE' };
@@ -195,7 +193,6 @@ export default function ParentDashboard() {
         childId: selectedChild.id
       });
       setSuccess('Disponibilités enregistrées avec succès !');
-      // Le message restera affiché jusqu'à ce que l'utilisateur quitte la page ou modifie à nouveau le formulaire
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
@@ -343,9 +340,6 @@ export default function ParentDashboard() {
                 {selectedChild.score > 0 ? `En relâche (${selectedChild.score.toFixed(1)})` : `Actif (${selectedChild.score.toFixed(1)})`}
               </span>
             )}
-            {selectedChild.parentId !== loggedInUserId && (
-              <span className="badge badge-error" style={{ backgroundColor: 'var(--color-secondary)', color: 'white' }}>Lecture seule</span>
-            )}
           </p>
         </div>
       </div>
@@ -414,10 +408,9 @@ export default function ParentDashboard() {
                               justifyContent: 'center',
                               borderColor: status === 'ABSENT' ? 'var(--color-secondary)' : undefined,
                               color: status === 'ABSENT' ? 'var(--color-secondary)' : undefined,
-                              cursor: selectedChild.parentId !== loggedInUserId ? 'default' : 'pointer'
+                              cursor: 'pointer'
                             }}
                             onClick={() => handleCycleStatus(slot.id)}
-                            disabled={selectedChild.parentId !== loggedInUserId}
                           >
                             {status === 'AVAILABLE' && 'Disponible'}
                             {status === 'UNAVAILABLE' && 'Indisponible'}
@@ -431,16 +424,12 @@ export default function ParentDashboard() {
               ))}
             </div>
 
-            {selectedChild.parentId === loggedInUserId ? (
+            <div style={{ marginTop: '2rem' }}>
               <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={handleSubmit} disabled={saving}>
                 {saving ? <Loader2 size={18} className="spin" /> : <Save size={18} />}
                 {saving ? 'Enregistrement...' : 'Enregistrer mes disponibilités'}
               </button>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: 'var(--color-glass-border)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-secondary)' }}>
-                Vous consultez le planning d'une autre famille. Vous ne pouvez modifier que les disponibilités de vos propres enfants.
-              </div>
-            )}
+            </div>
           </div>
         )}
       </div>
