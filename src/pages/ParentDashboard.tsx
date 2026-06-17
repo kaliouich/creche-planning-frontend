@@ -118,14 +118,16 @@ export default function ParentDashboard() {
     setError('');
     setSuccess('');
     try {
-      const planningRes = await apiClient.get(`/planning/${weekId}?childId=${child.id}`);
+      const planningRes = await apiClient.get(`/planning/${weekId}`);
       
       const initialAvails: Record<string, SlotStatus> = {};
       planningRes.data.slots.forEach((s: Slot) => {
         const isEnrolled = child.defaultPresences?.some(dp => dp.dayOfWeek === s.dayOfWeek && dp.halfDay === s.halfDay) ?? true;
         if (s.slotType !== 'CLOSED' && isEnrolled) {
           const avail = s.availabilities?.find(a => a.child.id === child.id);
-          initialAvails[s.id] = avail ? (avail.isAbsent ? 'ABSENT' : (avail.isAvailable ? 'AVAILABLE' : 'UNAVAILABLE')) : 'UNAVAILABLE';
+          const presence = s.childPresences?.find(p => p.child.id === child.id);
+          const isMarkedAbsent = presence && !presence.isPresent;
+          initialAvails[s.id] = isMarkedAbsent ? 'ABSENT' : (avail ? (avail.isAvailable ? 'AVAILABLE' : 'UNAVAILABLE') : 'UNAVAILABLE');
         }
       });
       setAvailabilities(initialAvails);
@@ -193,6 +195,8 @@ export default function ParentDashboard() {
         childId: selectedChild.id
       });
       setSuccess('Disponibilités enregistrées avec succès !');
+      // Recharger le planning complet pour mettre à jour le tableau global
+      await loadChildPlanning(selectedChild, openWeek.id);
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
