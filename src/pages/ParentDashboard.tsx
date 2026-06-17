@@ -9,6 +9,7 @@ interface Child {
   firstName: string;
   lastName: string;
   defaultPresences?: { dayOfWeek: string; halfDay: string }[];
+  score?: number;
 }
 
 interface Slot {
@@ -217,6 +218,11 @@ export default function ParentDashboard() {
                 <Baby size={32} color="var(--color-primary)" style={{ zIndex: 1 }} />
                 <strong style={{ fontSize: '1.2rem', zIndex: 1 }}>{child.firstName}</strong>
                 <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', zIndex: 1 }}>{child.lastName}</span>
+                {child.score !== undefined && (
+                  <span className={`badge ${child.score > 0 ? 'badge-success' : 'badge-warning'}`} style={{ marginTop: '0.5rem', zIndex: 1 }}>
+                    {child.score > 0 ? `En relâche (${child.score.toFixed(1)})` : `Actif (${child.score.toFixed(1)})`}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -311,7 +317,14 @@ export default function ParentDashboard() {
       <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h1>Planning de {selectedChild.firstName}</h1>
-          <p style={{ color: 'var(--color-text-secondary)' }}>Famille {selectedChild.lastName}</p>
+          <p style={{ color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            Famille {selectedChild.lastName}
+            {selectedChild.score !== undefined && (
+              <span className={`badge ${selectedChild.score > 0 ? 'badge-success' : 'badge-warning'}`}>
+                {selectedChild.score > 0 ? `En relâche (${selectedChild.score.toFixed(1)})` : `Actif (${selectedChild.score.toFixed(1)})`}
+              </span>
+            )}
+          </p>
         </div>
       </div>
 
