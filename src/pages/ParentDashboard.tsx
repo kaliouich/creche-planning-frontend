@@ -142,6 +142,7 @@ export default function ParentDashboard() {
   }, [selectedGlobalWeekId]);
 
   const handleCycleStatus = (slotId: string) => {
+    setSuccess(''); // Masquer le message de succès si on modifie une valeur
     setAvailabilities(prev => {
       const current = prev[slotId];
       if (current === 'UNAVAILABLE') return { ...prev, [slotId]: 'AVAILABLE' };
@@ -174,7 +175,7 @@ export default function ParentDashboard() {
         childId: selectedChild.id
       });
       setSuccess('Disponibilités enregistrées avec succès !');
-      setTimeout(() => setSuccess(''), 3000);
+      // Le message restera affiché jusqu'à ce que l'utilisateur quitte la page ou modifie à nouveau le formulaire
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
