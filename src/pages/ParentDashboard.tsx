@@ -325,15 +325,15 @@ export default function ParentDashboard() {
                         >
                           {isClosed && 'Fermé'}
                           {!isClosed && globalPlanning.status === 'PUBLISHED' && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                               {slot.assignments && slot.assignments.length > 0 
                                 ? slot.assignments.map((a, index) => {
                                     const schedule = index > 0 
                                       ? '12h00 - 17h00' 
                                       : (halfDay === 'MORNING' ? '8h00 - 13h00' : '13h45 - 18h45');
                                     return (
-                                      <div key={a.id}>
-                                        {a.parent.firstName} {a.parent.lastName} <br/>
+                                      <div key={a.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                        <span>{a.parent.firstName} {a.parent.lastName}</span>
                                         <span style={{ fontSize: '0.8rem', fontWeight: 'normal', opacity: 0.9 }}>({schedule})</span>
                                       </div>
                                     );
