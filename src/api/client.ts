@@ -10,7 +10,7 @@ import axios from 'axios';
  *   aux en-têtes des requêtes mutantes.
  */
 export const apiClient = axios.create({
-  baseURL: '/api', // Vite proxy redirige ça vers http://127.0.0.1:3000
+  baseURL: (import.meta as any).env.VITE_API_URL || '/api', // En prod, pointe vers l'URL du backend si différent du domaine. En dev, le proxy Vite prend le relai.
   withCredentials: true, 
   headers: {
     'Content-Type': 'application/json',
