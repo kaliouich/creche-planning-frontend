@@ -307,10 +307,12 @@ export default function WeekDetails() {
                                   </div>
                                 </div>
                                 
-                                <div style={{ color: 'var(--color-success)', marginTop: '0.25rem' }}>
-                                  <strong>Parent Dispo: </strong> 
-                                  {availableNames.length > 0 ? availableNames.join(', ') : '-'}
-                                </div>
+                                {week.status !== 'PUBLISHED' && (
+                                  <div style={{ color: 'var(--color-success)', marginTop: '0.25rem' }}>
+                                    <strong>Parent Dispo: </strong> 
+                                    {availableNames.length > 0 ? availableNames.join(', ') : '-'}
+                                  </div>
+                                )}
                               </div>
                             );
                           })()}
