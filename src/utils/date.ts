@@ -27,3 +27,36 @@ export function getWeekDateRange(weekNumber: number, year: number): string {
   
   return `${startOfWeek.toLocaleDateString('fr-FR', formatOptions)} - ${endOfWeek.toLocaleDateString('fr-FR', formatOptions)}`;
 }
+
+export function getDateForDayOfWeek(weekNumber: number, year: number, dayName: string): string {
+  // L'année commence le 1er janvier
+  const firstDayOfYear = new Date(year, 0, 1);
+  const daysOffset = firstDayOfYear.getDay() === 0 ? 1 : (8 - firstDayOfYear.getDay());
+  const firstMonday = new Date(year, 0, 1 + daysOffset);
+  
+  const firstDayOfFirstWeek = new Date(firstDayOfYear);
+  if (firstDayOfYear.getDay() <= 4 && firstDayOfYear.getDay() !== 0) {
+      firstDayOfFirstWeek.setDate(firstDayOfYear.getDate() - (firstDayOfYear.getDay() - 1));
+  } else {
+      firstDayOfFirstWeek.setDate(firstMonday.getDate());
+  }
+
+  const startOfWeek = new Date(firstDayOfFirstWeek);
+  startOfWeek.setDate(startOfWeek.getDate() + (weekNumber - 1) * 7);
+
+  const dayOffsets: Record<string, number> = {
+    'MONDAY': 0,
+    'TUESDAY': 1,
+    'WEDNESDAY': 2,
+    'THURSDAY': 3,
+    'FRIDAY': 4,
+    'SATURDAY': 5,
+    'SUNDAY': 6
+  };
+
+  const offset = dayOffsets[dayName] || 0;
+  const targetDate = new Date(startOfWeek);
+  targetDate.setDate(targetDate.getDate() + offset);
+
+  return targetDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+}

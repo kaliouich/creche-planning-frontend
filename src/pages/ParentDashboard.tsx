@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../api/client';
 import { Calendar, Loader2, Save, CheckCircle2, Baby, ArrowLeft, Printer } from 'lucide-react';
-import { getWeekDateRange } from '../utils/date';
+import { getWeekDateRange, getDateForDayOfWeek } from '../utils/date';
 
 
 interface Child {
@@ -293,7 +293,12 @@ export default function ParentDashboard() {
             <div className="planning-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: globalPlanning.status === 'PUBLISHED' ? 1 : 0.6 }}>
               {DAYS.map(day => (
                 <div className="grid-day-row" key={day} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr', gap: '1rem', alignItems: 'start', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
-                  <strong style={{ fontSize: '1.1rem', paddingTop: '0.2rem' }}>{DAY_LABELS[day]}</strong>
+                  <div style={{ display: 'flex', flexDirection: 'column', paddingTop: '0.2rem' }}>
+                    <strong style={{ fontSize: '1.1rem' }}>{DAY_LABELS[day]}</strong>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+                      {getDateForDayOfWeek(globalPlanning.weekNumber, globalPlanning.year, day)}
+                    </span>
+                  </div>
                   
                   {HALF_DAYS.map(halfDay => {
                     const slot = globalPlanning.slots.find(s => s.dayOfWeek === day && s.halfDay === halfDay);
@@ -462,7 +467,12 @@ export default function ParentDashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
               {DAYS.map(day => (
                 <div key={day} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr', gap: '1rem', alignItems: 'center', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
-                  <strong style={{ fontSize: '1.1rem' }}>{DAY_LABELS[day]}</strong>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <strong style={{ fontSize: '1.1rem' }}>{DAY_LABELS[day]}</strong>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+                      {getDateForDayOfWeek(openWeek.weekNumber, openWeek.year, day)}
+                    </span>
+                  </div>
                   
                   {HALF_DAYS.map(halfDay => {
                     const slot = openWeek.slots.find(s => s.dayOfWeek === day && s.halfDay === halfDay);
