@@ -134,8 +134,11 @@ export default function WeekDetails() {
         </div>
 
         {/* Titre pour la version imprimée */}
-        <h1 className="only-print" style={{ display: 'none', margin: '0 0 2rem 0', fontSize: '2rem' }}>
-          Planning Semaine {week.weekNumber} ({getWeekDateRange(week.weekNumber, week.year)})
+        <h1 className="only-print" style={{ display: 'none', margin: '0 0 1rem 0', fontSize: '2rem', textAlign: 'center', color: 'var(--color-primary)' }}>
+          Planning Semaine {week.weekNumber} - Permanences des parents
+          <div style={{ fontSize: '1.2rem', color: 'var(--color-text-secondary)', fontWeight: 'normal', marginTop: '0.2rem' }}>
+            ({getWeekDateRange(week.weekNumber, week.year)})
+          </div>
         </h1>
 
       {error && (
