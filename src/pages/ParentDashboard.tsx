@@ -277,17 +277,17 @@ export default function ParentDashboard() {
                     )}
                   </div>
                 </div>
-
-                {/* Titre exclusif à l'impression */}
-                {globalPlanning.status === 'PUBLISHED' && (
-                  <h1 className="only-print" style={{ margin: '0 0 1rem 0', fontSize: '2rem', textAlign: 'center', color: 'var(--color-primary)' }}>
-                    Planning Semaine {globalPlanning.weekNumber} - Permanences des parents
-                    <div style={{ fontSize: '1.2rem', color: 'var(--color-text-secondary)', fontWeight: 'normal', marginTop: '0.2rem' }}>
-                      ({getWeekDateRange(globalPlanning.weekNumber, globalPlanning.year)})
-                    </div>
-                  </h1>
-                )}
               </div>
+              
+              {/* Titre exclusif à l'impression */}
+              {globalPlanning.status === 'PUBLISHED' && (
+                <h1 className="only-print" style={{ margin: '0 0 1rem 0', fontSize: '2rem', textAlign: 'center', color: 'var(--color-primary)' }}>
+                  Planning Semaine {globalPlanning.weekNumber} - Permanences des parents
+                  <div style={{ fontSize: '1.2rem', color: 'var(--color-text-secondary)', fontWeight: 'normal', marginTop: '0.2rem' }}>
+                    ({getWeekDateRange(globalPlanning.weekNumber, globalPlanning.year)})
+                  </div>
+                </h1>
+              )}
             </div>
 
             <div className="planning-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: globalPlanning.status === 'PUBLISHED' ? 1 : 0.6 }}>
