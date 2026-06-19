@@ -9,6 +9,11 @@ interface Child {
   lastName: string;
   ageGroup: 'PETIT' | 'GRAND';
   defaultPresences?: { dayOfWeek: string; halfDay: string }[];
+  parent?: {
+    id: string;
+    email: string;
+    secondEmail?: string | null;
+  };
 }
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
@@ -31,6 +36,10 @@ export default function ChildrenManagement() {
   const [defaultPresences, setDefaultPresences] = useState<{dayOfWeek: string, halfDay: string}[]>(
     DAYS.flatMap(day => HALF_DAYS.map(halfDay => ({ dayOfWeek: day, halfDay })))
   );
+  
+  // Nouveaux champs d'emails pour la famille
+  const [parent1Email, setParent1Email] = useState('');
+  const [parent2Email, setParent2Email] = useState('');
 
   const [creating, setCreating] = useState(false);
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
@@ -82,6 +91,8 @@ export default function ChildrenManagement() {
     setLastName('');
     setAgeGroup('GRAND');
     setSiblingId('');
+    setParent1Email('');
+    setParent2Email('');
     setDefaultPresences(DAYS.flatMap(day => HALF_DAYS.map(halfDay => ({ dayOfWeek: day, halfDay }))));
   };
 
@@ -101,13 +112,21 @@ export default function ChildrenManagement() {
         setChildren(prev => prev.map(c => c.id === editingChildId ? response.data : c).sort((a, b) => a.lastName.localeCompare(b.lastName)));
         handleCancelEdit();
       } else {
-        const response = await apiClient.post('/children', {
-          firstName,
-          lastName,
+        let payload: any = { 
+          firstName, 
+          lastName, 
           ageGroup,
-          siblingId: siblingId || undefined,
-          defaultPresences
-        });
+          defaultPresences 
+        };
+
+        if (siblingId) {
+          payload.siblingId = siblingId;
+        } else {
+          payload.parent1Email = parent1Email;
+          payload.parent2Email = parent2Email;
+        }
+
+        const response = await apiClient.post('/children', payload);
         setChildren(prev => [...prev, response.data].sort((a, b) => a.lastName.localeCompare(b.lastName)));
         handleCancelEdit();
       }
@@ -205,18 +224,49 @@ export default function ChildrenManagement() {
 
             <div className="form-group" style={{ display: editingChildId ? 'none' : 'block' }}>
               <label className="form-label" htmlFor="sibling">Fratrie (Optionnel)</label>
-              <select 
-                id="sibling" className="form-input" 
-                value={siblingId} onChange={e => setSiblingId(e.target.value)}
-              >
-                <option value="">-- Pas de frère/sœur inscrit --</option>
-                {children.map(c => (
-                  <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
-                ))}
-              </select>
-              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', display: 'block', marginTop: '0.5rem' }}>
-                Si c'est un frère ou une sœur d'un enfant déjà inscrit, sélectionnez-le ici pour lier les permanences à la même famille.
-              </span>
+              <div>
+                <label className="form-label" style={{ fontWeight: 'normal', fontSize: '0.85rem' }}>C'est le frère/sœur de...</label>
+                <select className="form-input" value={siblingId} onChange={e => setSiblingId(e.target.value)}>
+                  <option value="">-- Nouvelle famille --</option>
+                  {children.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.firstName} {c.lastName}
+                    </option>
+                  ))}
+                </select>
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
+                  Optionnel. Permet de lier cet enfant à un parent existant.
+                </p>
+              </div>
+              
+              {!siblingId && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', backgroundColor: 'var(--color-bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginTop: '1rem' }}>
+                  <div style={{ marginBottom: '-0.5rem' }}>
+                    <strong style={{ fontSize: '0.9rem' }}>Création du compte parent</strong>
+                  </div>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.85rem' }}>Email du Parent 1 <span style={{ color: 'var(--color-secondary)' }}>*</span></label>
+                    <input 
+                      type="email" 
+                      className="form-input" 
+                      value={parent1Email} 
+                      onChange={e => setParent1Email(e.target.value)} 
+                      placeholder="parent1@email.com"
+                      required={!siblingId}
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label" style={{ fontSize: '0.85rem' }}>Email du Parent 2 <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem', fontWeight: 'normal' }}>(Optionnel)</span></label>
+                    <input 
+                      type="email" 
+                      className="form-input" 
+                      value={parent2Email} 
+                      onChange={e => setParent2Email(e.target.value)} 
+                      placeholder="parent2@email.com"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>

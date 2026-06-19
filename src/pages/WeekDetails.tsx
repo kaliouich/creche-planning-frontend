@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
-import { ArrowLeft, Calendar, ShieldBan, Users, Loader2, Printer } from 'lucide-react';
+import { ArrowLeft, Calendar, ShieldBan, Users, Loader2, Printer, Bell } from 'lucide-react';
 import { getWeekDateRange, getDateForDayOfWeek } from '../utils/date';
 
 interface Assignment {
@@ -21,6 +21,13 @@ interface Child {
   defaultPresences?: { dayOfWeek: string; halfDay: string }[];
   score?: number;
   ageGroup?: 'PETIT' | 'GRAND';
+  parent?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    secondEmail?: string | null;
+  };
 }
 
 interface Availability {
@@ -66,6 +73,7 @@ export default function WeekDetails() {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -109,6 +117,21 @@ export default function WeekDetails() {
     }
   };
 
+  const handleNotifyParent = async (parentId?: string) => {
+    if (!parentId) return;
+    try {
+      const response = await apiClient.post(`/users/${parentId}/notify`);
+      setSuccess(response.data.message || "Rappel envoyé avec succès.");
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { error?: string } } };
+        setError(axiosErr.response?.data?.error || 'Erreur lors de l\'envoi du rappel');
+        setTimeout(() => setError(''), 5000);
+      }
+    }
+  };
+
   if (loading) return <div className="flex-center" style={{ padding: '4rem' }}><Loader2 size={32} className="spin" style={{ color: 'var(--color-primary)' }} /></div>;
   if (!week) return <div className="animate-fade-in"><h3>Semaine introuvable</h3></div>;
 
@@ -133,13 +156,18 @@ export default function WeekDetails() {
           </div>
         </div>
 
-        {/* Titre pour la version imprimée */}
         <h1 className="only-print" style={{ margin: '0 0 1rem 0', fontSize: '2rem', textAlign: 'center', color: 'var(--color-primary)' }}>
           Planning Semaine {week.weekNumber} - Permanences des parents
           <div style={{ fontSize: '1.2rem', color: 'var(--color-text-secondary)', fontWeight: 'normal', marginTop: '0.2rem' }}>
             ({getWeekDateRange(week.weekNumber, week.year)})
           </div>
         </h1>
+
+      {success && (
+        <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--color-success)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
+          {success}
+        </div>
+      )}
 
       {error && (
         <div style={{ backgroundColor: 'rgba(244, 63, 94, 0.1)', color: 'var(--color-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
@@ -384,7 +412,21 @@ export default function WeekDetails() {
                         {hasSubmitted ? (
                           <span className="badge badge-success">Saisi</span>
                         ) : (
-                          <span className="badge badge-error">En attente</span>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                            <span className="badge badge-error">En attente</span>
+                            {child.parent?.id && (
+                              <button 
+                                onClick={() => handleNotifyParent(child.parent?.id)}
+                                title="Envoyer un rappel par email"
+                                style={{ 
+                                  background: 'none', border: 'none', cursor: 'pointer', 
+                                  color: 'var(--color-warning)', display: 'flex', alignItems: 'center', padding: '0.2rem' 
+                                }}
+                              >
+                                <Bell size={16} />
+                              </button>
+                            )}
+                          </div>
                         )}
                       </td>
                       {DAYS.flatMap(day => {
