@@ -253,7 +253,8 @@ h1, h2, h3, h4, h5, h6 {
   body {
     background: white !important;
     color: black !important;
-    font-size: 11pt;
+    font-size: 10pt;
+    zoom: 0.85; /* Pour aider à tout faire rentrer sur une page */
   }
 
   /* Cacher les éléments inutiles à l'impression */
@@ -292,11 +293,18 @@ h1, h2, h3, h4, h5, h6 {
   /* Améliorer les séparateurs pour l'impression */
   .grid-day-row {
     border-bottom: 1px solid #ccc !important;
+    padding-bottom: 0.25rem !important;
     page-break-inside: avoid;
+    gap: 0.25rem !important;
+    grid-template-columns: 100px 1fr 1fr !important;
+  }
+
+  .grid-day-row > div {
+    gap: 0.25rem !important;
   }
 
   @page {
-    margin: 1cm;
-    size: A4 landscape; /* Landscape is generally better for week plannings */
+    margin: 0.5cm;
+    size: A4 portrait;
   }
 }
