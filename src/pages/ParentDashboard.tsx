@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../api/client';
-import { Calendar, Loader2, Save, CheckCircle2, Baby, ArrowLeft } from 'lucide-react';
+import { Calendar, Loader2, Save, CheckCircle2, Baby, ArrowLeft, Printer } from 'lucide-react';
 import { getWeekDateRange } from '../utils/date';
 
 
@@ -11,6 +11,7 @@ interface Child {
   defaultPresences?: { dayOfWeek: string; halfDay: string }[];
   score?: number;
   parentId?: string;
+  ageGroup?: 'PETIT' | 'GRAND';
 }
 
 interface Slot {
@@ -75,10 +76,6 @@ export default function ParentDashboard() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
-
-  const userStr = localStorage.getItem('userMeta');
-  const user = userStr ? JSON.parse(userStr) : null;
-  const loggedInUserId = user?.id;
 
   // 1. Fetch children and the open week definition
   useEffect(() => {
@@ -215,18 +212,18 @@ export default function ParentDashboard() {
   if (!selectedChild) {
     return (
       <div className="animate-fade-in">
-        <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <div className="no-print" style={{ marginBottom: '2rem', textAlign: 'center' }}>
           <Baby size={48} color="var(--color-primary)" style={{ margin: '0 auto 1rem' }} />
           <h1>Espace Parent</h1>
           <p style={{ color: 'var(--color-text-secondary)' }}>Veuillez sélectionner le prénom de votre enfant pour remplir le planning.</p>
         </div>
 
         {childrenList.length === 0 ? (
-          <div className="glass-card" style={{ textAlign: 'center', padding: '3rem' }}>
+          <div className="glass-card no-print" style={{ textAlign: 'center', padding: '3rem' }}>
             <p>Aucun enfant n'est enregistré dans la crèche pour le moment.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+          <div className="no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
             {childrenList.map(child => (
               <button 
                 key={child.id} 
@@ -256,7 +253,7 @@ export default function ParentDashboard() {
                 <Calendar size={20} /> Planning Global
               </h3>
               
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <select 
                   value={selectedGlobalWeekId} 
                   onChange={(e) => setSelectedGlobalWeekId(e.target.value)}
@@ -266,18 +263,33 @@ export default function ParentDashboard() {
                     <option key={w.id} value={w.id}>Semaine {w.weekNumber} ({getWeekDateRange(w.weekNumber, w.year)})</option>
                   ))}
                 </select>
+                <div className="no-print" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: globalPlanning.status === 'PUBLISHED' ? 1 : 0.6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {globalPlanning.status === 'PUBLISHED' ? (
+                      <>
+                        <span className="badge badge-success">Publié</span>
+                        <button className="btn btn-outline" onClick={() => window.print()} style={{ padding: '0.25rem 0.75rem', fontSize: '0.9rem' }}>
+                          <Printer size={16} /> Exporter PDF
+                        </button>
+                      </>
+                    ) : (
+                      <span className="badge badge-warning">En cours d'élaboration</span>
+                    )}
+                  </div>
+                </div>
 
-                {globalPlanning.status === 'PUBLISHED' ? (
-                  <span className="badge badge-success">Publié</span>
-                ) : (
-                  <span className="badge badge-warning">En cours d'élaboration</span>
+                {/* Titre exclusif à l'impression */}
+                {globalPlanning.status === 'PUBLISHED' && (
+                  <h1 className="only-print" style={{ margin: '0 0 2rem 0', fontSize: '2rem' }}>
+                    Planning Global Semaine {globalPlanning.weekNumber} ({getWeekDateRange(globalPlanning.weekNumber, globalPlanning.year)})
+                  </h1>
                 )}
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: globalPlanning.status === 'PUBLISHED' ? 1 : 0.6 }}>
+            <div className="planning-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: globalPlanning.status === 'PUBLISHED' ? 1 : 0.6 }}>
               {DAYS.map(day => (
-                <div key={day} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr', gap: '1rem', alignItems: 'start', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
+                <div className="grid-day-row" key={day} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr', gap: '1rem', alignItems: 'start', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
                   <strong style={{ fontSize: '1.1rem', paddingTop: '0.2rem' }}>{DAY_LABELS[day]}</strong>
                   
                   {HALF_DAYS.map(halfDay => {
@@ -315,6 +327,69 @@ export default function ParentDashboard() {
                             </>
                           )}
                         </div>
+
+                        {!isClosed && globalPlanning.status === 'PUBLISHED' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem', fontSize: '0.85rem', textAlign: 'left' }}>
+                            {(() => {
+                              // 1. Absents déclarés (ChildPresence = false)
+                              const declaredAbsents = (slot.childPresences || [])
+                                .filter((cp: any) => !cp.isPresent)
+                                .map((cp: any) => cp.child.id);
+                                
+                              // 2. Non-accueillis (enfant ne vient pas cette demi-journée)
+                              const notEnrolled = childrenList.filter(c => {
+                                const isEnrolled = c.defaultPresences?.some(dp => dp.dayOfWeek === day && dp.halfDay === halfDay);
+                                return !isEnrolled;
+                              });
+
+                              // Calcul des absents totaux
+                              const absentNames: string[] = [];
+                              declaredAbsents.forEach((childId: string) => {
+                                const c = childrenList.find(x => x.id === childId);
+                                if (c && !notEnrolled.some(ne => ne.id === c.id)) absentNames.push(c.firstName);
+                              });
+                              notEnrolled.forEach(c => absentNames.push(c.firstName));
+                              
+                              // Calcul des présents
+                              const presentChildren = childrenList
+                                .filter(c => !notEnrolled.some(ne => ne.id === c.id)) // is enrolled
+                                .filter(c => !declaredAbsents.includes(c.id)); // is not marked absent
+                                
+                              const grandsPresNames = presentChildren.filter(c => c.ageGroup !== 'PETIT').map(c => c.firstName);
+                              const petitsPresNames = presentChildren.filter(c => c.ageGroup === 'PETIT').map(c => c.firstName);
+                              
+                              const absentChildren = childrenList.filter(c => absentNames.includes(c.firstName));
+                              const grandsAbsNames = absentChildren.filter(c => c.ageGroup !== 'PETIT').map(c => c.firstName);
+                              const petitsAbsNames = absentChildren.filter(c => c.ageGroup === 'PETIT').map(c => c.firstName);
+                              
+                              return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
+                                  {/* GRANDS */}
+                                  <div>
+                                    <strong style={{ color: 'var(--color-primary)' }}>
+                                      Grands : {grandsPresNames.length} présent{grandsPresNames.length > 1 ? 's' : ''} / {grandsAbsNames.length} absent{grandsAbsNames.length > 1 ? 's' : ''}
+                                    </strong>
+                                    <div style={{ paddingLeft: '0.5rem', marginTop: '0.2rem', color: 'var(--color-text-secondary)' }}>
+                                      <div>- présents : {grandsPresNames.length > 0 ? grandsPresNames.join(', ') : '-'}</div>
+                                      <div>- absents : {grandsAbsNames.length > 0 ? grandsAbsNames.join(', ') : '-'}</div>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* PETITS */}
+                                  <div>
+                                    <strong style={{ color: 'var(--color-secondary)' }}>
+                                      Petits : {petitsPresNames.length} présent{petitsPresNames.length > 1 ? 's' : ''} / {petitsAbsNames.length} absent{petitsAbsNames.length > 1 ? 's' : ''}
+                                    </strong>
+                                    <div style={{ paddingLeft: '0.5rem', marginTop: '0.2rem', color: 'var(--color-text-secondary)' }}>
+                                      <div>- présents : {petitsPresNames.length > 0 ? petitsPresNames.join(', ') : '-'}</div>
+                                      <div>- absents : {petitsAbsNames.length > 0 ? petitsAbsNames.join(', ') : '-'}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -329,7 +404,7 @@ export default function ParentDashboard() {
 
   // --- VUE 2 : Grille de l'enfant sélectionné ---
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in no-print">
       <button className="btn btn-outline" style={{ marginBottom: '2rem' }} onClick={() => setSelectedChild(null)}>
         <ArrowLeft size={18} /> Retour à la liste
       </button>
@@ -440,7 +515,7 @@ export default function ParentDashboard() {
 
       {/* Tableau Recap de suivi de remplissage */}
       {openWeek && childrenList.length > 0 && (
-        <div className="glass-card" style={{ marginTop: '2rem' }}>
+        <div className="glass-card no-print" style={{ marginTop: '2rem' }}>
           <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Calendar size={20} /> Tableau de suivi de remplissage global
           </h3>
@@ -463,6 +538,40 @@ export default function ParentDashboard() {
                     <th key={`${day}-MORNING`} style={{ padding: '0.5rem', borderBottom: '1px solid var(--color-glass-border)', borderLeft: '1px solid var(--color-glass-border)', fontWeight: 'normal', color: 'var(--color-text-secondary)' }}>Matin</th>,
                     <th key={`${day}-AFTERNOON`} style={{ padding: '0.5rem', borderBottom: '1px solid var(--color-glass-border)', fontWeight: 'normal', color: 'var(--color-text-secondary)' }}>Aprèm</th>
                   ])}
+                </tr>
+                <tr>
+                  <th style={{ padding: '0.5rem', borderBottom: '2px solid var(--color-glass-border)' }}></th>
+                  <th style={{ padding: '0.5rem', borderBottom: '2px solid var(--color-glass-border)', fontSize: '0.8rem', color: 'var(--color-text-light)' }}>Statistiques</th>
+                  {DAYS.flatMap(day => {
+                    return HALF_DAYS.map(halfDay => {
+                      const slot = openWeek.slots.find(s => s.dayOfWeek === day && s.halfDay === halfDay);
+                      let petitsPres = 0;
+                      let grandsPres = 0;
+                      let petitsAbs = 0;
+                      let grandsAbs = 0;
+
+                      if (slot && slot.childPresences) {
+                        slot.childPresences.forEach((cp: any) => {
+                          const childInfo = childrenList.find(c => c.id === cp.child.id) || cp.child;
+                          const isPetit = childInfo.ageGroup === 'PETIT';
+                          if (cp.isPresent) {
+                            if (isPetit) petitsPres++; else grandsPres++;
+                          } else {
+                            if (isPetit) petitsAbs++; else grandsAbs++;
+                          }
+                        });
+                      }
+
+                      return (
+                        <th key={`stats-${day}-${halfDay}`} style={{ padding: '0.5rem', borderBottom: '2px solid var(--color-glass-border)', borderLeft: halfDay === 'MORNING' ? '1px solid var(--color-glass-border)' : 'none', fontSize: '0.75rem', fontWeight: 'normal', lineHeight: '1.2' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ color: 'var(--color-success)' }}>{petitsPres}P {grandsPres}G (Présents)</span>
+                            <span style={{ color: 'var(--color-secondary)' }}>{petitsAbs}P {grandsAbs}G (Absents)</span>
+                          </div>
+                        </th>
+                      );
+                    });
+                  })}
                 </tr>
               </thead>
               <tbody>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
-import { Loader2, ArrowLeft, Calendar, ShieldBan, Users } from 'lucide-react';
+import { ArrowLeft, Calendar, ShieldBan, Users, Loader2, Printer } from 'lucide-react';
 import { getWeekDateRange } from '../utils/date';
 
 interface Assignment {
@@ -19,6 +19,8 @@ interface Child {
   firstName: string;
   lastName: string;
   defaultPresences?: { dayOfWeek: string; halfDay: string }[];
+  score?: number;
+  ageGroup?: 'PETIT' | 'GRAND';
 }
 
 interface Availability {
@@ -114,15 +116,27 @@ export default function WeekDetails() {
 
   return (
     <div className="animate-fade-in">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+        <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
           <button className="btn btn-outline" onClick={() => navigate('/')}>
             <ArrowLeft size={20} /> Retour
           </button>
           <h1 style={{ margin: 0, fontSize: '1.8rem' }}>
             Semaine {week.weekNumber} <span style={{ fontSize: '1.2rem', color: 'var(--color-text-secondary)', fontWeight: 400 }}>({getWeekDateRange(week.weekNumber, week.year)})</span>
           </h1>
-          <span className="badge badge-warning" style={{ marginLeft: 'auto' }}>{week.status}</span>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span className="badge badge-warning">{week.status}</span>
+            {week.status === 'PUBLISHED' && (
+              <button className="btn btn-outline" onClick={() => window.print()} style={{ padding: '0.25rem 0.75rem', fontSize: '0.9rem' }}>
+                <Printer size={16} /> Exporter PDF
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Titre pour la version imprimée */}
+        <h1 className="only-print" style={{ display: 'none', margin: '0 0 2rem 0', fontSize: '2rem' }}>
+          Planning Semaine {week.weekNumber} ({getWeekDateRange(week.weekNumber, week.year)})
+        </h1>
 
       {error && (
         <div style={{ backgroundColor: 'rgba(244, 63, 94, 0.1)', color: 'var(--color-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
@@ -136,14 +150,14 @@ export default function WeekDetails() {
         </h3>
         
         {!isEditable && (
-          <p style={{ color: 'var(--color-warning)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+          <p className="no-print" style={{ color: 'var(--color-warning)', marginBottom: '1rem', fontSize: '0.9rem' }}>
             La semaine est en mode lecture seule. Les créneaux ne peuvent plus être modifiés.
           </p>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="planning-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {DAYS.map(day => (
-            <div key={day} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr', gap: '1rem', alignItems: 'start', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
+            <div className="grid-day-row" key={day} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr', gap: '1rem', alignItems: 'start', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
               <strong style={{ fontSize: '1.1rem', paddingTop: '0.2rem' }}>{DAY_LABELS[day]}</strong>
               
               {HALF_DAYS.map(halfDay => {
@@ -215,26 +229,46 @@ export default function WeekDetails() {
                             notEnrolled.forEach(c => absentNames.push(c.firstName));
                             
                             // Calcul des présents
-                            const presentNames = children
+                            const presentChildren = children
                               .filter(c => !notEnrolled.some(ne => ne.id === c.id)) // is enrolled
-                              .filter(c => !declaredAbsents.includes(c.id)) // is not marked absent
-                              .map(c => c.firstName);
+                              .filter(c => !declaredAbsents.includes(c.id)); // is not marked absent
+                              
+                            const grandsPresNames = presentChildren.filter(c => c.ageGroup !== 'PETIT').map(c => c.firstName);
+                            const petitsPresNames = presentChildren.filter(c => c.ageGroup === 'PETIT').map(c => c.firstName);
+                            
+                            const absentChildren = children.filter(c => absentNames.includes(c.firstName));
+                            const grandsAbsNames = absentChildren.filter(c => c.ageGroup !== 'PETIT').map(c => c.firstName);
+                            const petitsAbsNames = absentChildren.filter(c => c.ageGroup === 'PETIT').map(c => c.firstName);
                             
                             return (
-                              <>
-                                <div style={{ color: 'var(--color-primary)', display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
-                                  <strong>{presentNames.length} Présent: </strong>
-                                  {presentNames.length > 0 ? presentNames.join(', ') : '-'}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
+                                {/* GRANDS */}
+                                <div>
+                                  <strong style={{ color: 'var(--color-primary)' }}>
+                                    Grands : {grandsPresNames.length} présent{grandsPresNames.length > 1 ? 's' : ''} / {grandsAbsNames.length} absent{grandsAbsNames.length > 1 ? 's' : ''}
+                                  </strong>
+                                  <div style={{ paddingLeft: '0.5rem', marginTop: '0.2rem', color: 'var(--color-text-secondary)' }}>
+                                    <div>- présents : {grandsPresNames.length > 0 ? grandsPresNames.join(', ') : '-'}</div>
+                                    <div>- absents : {grandsAbsNames.length > 0 ? grandsAbsNames.join(', ') : '-'}</div>
+                                  </div>
                                 </div>
-                                <div style={{ color: 'var(--color-success)', display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
-                                  <strong>{availableNames.length} Parent Dispo: </strong> 
+                                
+                                {/* PETITS */}
+                                <div>
+                                  <strong style={{ color: 'var(--color-secondary)' }}>
+                                    Petits : {petitsPresNames.length} présent{petitsPresNames.length > 1 ? 's' : ''} / {petitsAbsNames.length} absent{petitsAbsNames.length > 1 ? 's' : ''}
+                                  </strong>
+                                  <div style={{ paddingLeft: '0.5rem', marginTop: '0.2rem', color: 'var(--color-text-secondary)' }}>
+                                    <div>- présents : {petitsPresNames.length > 0 ? petitsPresNames.join(', ') : '-'}</div>
+                                    <div>- absents : {petitsAbsNames.length > 0 ? petitsAbsNames.join(', ') : '-'}</div>
+                                  </div>
+                                </div>
+                                
+                                <div style={{ color: 'var(--color-success)', marginTop: '0.25rem' }}>
+                                  <strong>Parent Dispo: </strong> 
                                   {availableNames.length > 0 ? availableNames.join(', ') : '-'}
                                 </div>
-                                <div style={{ color: 'var(--color-secondary)', display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
-                                  <strong>{absentNames.length} Absent: </strong>
-                                  {absentNames.length > 0 ? absentNames.join(', ') : '-'}
-                                </div>
-                              </>
+                              </div>
                             );
                           })()}
                         </div>
@@ -249,7 +283,7 @@ export default function WeekDetails() {
       </div>
 
       {/* Tableau des disponibilités des parents */}
-      <div className="glass-card" style={{ marginTop: '2rem' }}>
+      <div className="glass-card no-print" style={{ marginTop: '2rem' }}>
         <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Users size={20} /> Tableau des disponibilités soumises
         </h3>

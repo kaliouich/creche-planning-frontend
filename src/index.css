@@ -237,3 +237,66 @@ h1, h2, h3, h4, h5, h6 {
   background-color: rgba(245, 158, 11, 0.1);
   color: var(--color-warning);
 }
+
+.only-print {
+  display: none;
+}
+
+/* Print Styles */
+@media print {
+  /* Forcer les couleurs de fond exactes pour l'impression (badges, boutons) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+  }
+
+  /* Cacher les éléments inutiles à l'impression */
+  .no-print, nav, .navbar, button, select {
+    display: none !important;
+  }
+  
+  .only-print {
+    display: block !important;
+  }
+
+  /* Sauf si on a forcé un élément à être visible en tant que texte (ex: nom du parent assigné) */
+  .btn {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: black !important;
+    padding: 0 !important;
+    text-align: left !important;
+    display: block !important;
+  }
+  
+  .badge {
+    border: 1px solid #ccc !important;
+  }
+
+  /* Simplifier les glass-cards */
+  .glass-card {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Améliorer les séparateurs pour l'impression */
+  .grid-day-row {
+    border-bottom: 1px solid #ccc !important;
+    page-break-inside: avoid;
+  }
+
+  @page {
+    margin: 1cm;
+    size: A4 landscape; /* Landscape is generally better for week plannings */
+  }
+}
