@@ -318,16 +318,28 @@ export default function ParentDashboard() {
                             borderColor: isClosed ? 'var(--color-secondary)' : undefined,
                             color: isClosed ? 'var(--color-secondary)' : undefined,
                             cursor: 'default',
-                            fontWeight: globalPlanning.status === 'PUBLISHED' && !isClosed && slot.assignments?.length ? 600 : undefined
+                            fontWeight: globalPlanning.status === 'PUBLISHED' && !isClosed && slot.assignments?.length ? 600 : undefined,
+                            padding: '0.5rem',
+                            height: 'auto'
                           }}
                         >
                           {isClosed && 'Fermé'}
                           {!isClosed && globalPlanning.status === 'PUBLISHED' && (
-                            <>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', textAlign: 'center' }}>
                               {slot.assignments && slot.assignments.length > 0 
-                                ? slot.assignments.map(a => `${a.parent.firstName} ${a.parent.lastName}`.trim()).join(' & ')
+                                ? slot.assignments.map((a, index) => {
+                                    const schedule = index > 0 
+                                      ? '12h00 - 17h00' 
+                                      : (halfDay === 'MORNING' ? '8h00 - 13h00' : '13h45 - 18h45');
+                                    return (
+                                      <div key={a.id}>
+                                        {a.parent.firstName} {a.parent.lastName} <br/>
+                                        <span style={{ fontSize: '0.8rem', fontWeight: 'normal', opacity: 0.9 }}>({schedule})</span>
+                                      </div>
+                                    );
+                                  })
                                 : '✗ Non rempli'}
-                            </>
+                            </div>
                           )}
                           {!isClosed && globalPlanning.status !== 'PUBLISHED' && (
                             <>

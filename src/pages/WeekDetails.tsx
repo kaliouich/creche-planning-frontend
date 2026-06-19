@@ -179,34 +179,69 @@ export default function WeekDetails() {
                   <div key={slot.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>{HALF_DAY_LABELS[halfDay]}</span>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
-                      <button 
-                        className={`btn ${isClosed ? 'btn-outline' : isDouble ? 'btn-primary' : 'btn-outline'}`}
-                        style={{ 
-                          justifyContent: 'center',
-                          borderColor: isClosed ? 'var(--color-secondary)' : undefined,
-                          color: isClosed ? 'var(--color-secondary)' : undefined,
-                          opacity: isEditable ? 1 : 0.8,
-                          cursor: isEditable ? 'pointer' : 'default',
-                          fontWeight: !isEditable && !isClosed && slot.assignments?.length ? 600 : undefined
-                        }}
-                        onClick={() => handleToggleSlotType(slot)}
-                        disabled={!isEditable}
-                      >
-                        {isClosed && <><ShieldBan size={16} /> Fermé</>}
-                        {!isClosed && !isEditable && (
-                          <>
-                            {slot.assignments && slot.assignments.length > 0 
-                              ? slot.assignments.map(a => `${a.parent.firstName} ${a.parent.lastName}`.trim()).join(' & ')
-                              : '✗ Non rempli'}
-                          </>
-                        )}
-                        {!isClosed && isEditable && (
-                          <>
-                            {isDouble && <><Users size={16} /> Double Perm</>}
-                            {!isDouble && 'Normal (1 Parent)'}
-                          </>
-                        )}
-                      </button>
+                      {isEditable ? (
+                        <button 
+                          className={`btn ${isClosed ? 'btn-outline' : isDouble ? 'btn-primary' : 'btn-outline'}`}
+                          style={{ 
+                            justifyContent: 'center',
+                            borderColor: isClosed ? 'var(--color-secondary)' : undefined,
+                            color: isClosed ? 'var(--color-secondary)' : undefined,
+                            opacity: isEditable ? 1 : 0.8,
+                            cursor: isEditable ? 'pointer' : 'default',
+                            fontWeight: !isEditable && !isClosed && slot.assignments?.length ? 600 : undefined
+                          }}
+                          onClick={() => handleToggleSlotType(slot)}
+                          disabled={!isEditable}
+                        >
+                          {isClosed && <><ShieldBan size={16} /> Fermé</>}
+                          {!isClosed && (
+                            <>
+                              {isDouble && <><Users size={16} /> Double Perm</>}
+                              {!isDouble && 'Normal (1 Parent)'}
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <div 
+                          className={`btn ${isClosed ? 'btn-outline' : 'btn-primary'}`}
+                          style={{ 
+                            justifyContent: 'center',
+                            borderColor: isClosed ? 'var(--color-secondary)' : undefined,
+                            color: isClosed ? 'var(--color-secondary)' : undefined,
+                            cursor: 'default',
+                            fontWeight: week.status === 'PUBLISHED' && !isClosed && slot.assignments?.length ? 600 : undefined,
+                            padding: '0.5rem',
+                            height: 'auto'
+                          }}
+                        >
+                          {isClosed && 'Fermé'}
+                          {!isClosed && week.status === 'PUBLISHED' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', textAlign: 'center' }}>
+                              {slot.assignments && slot.assignments.length > 0 
+                                ? slot.assignments.map((a, index) => {
+                                    const schedule = index > 0 
+                                      ? '12h00 - 17h00' 
+                                      : (halfDay === 'MORNING' ? '8h00 - 13h00' : '13h45 - 18h45');
+                                    return (
+                                      <div key={a.id}>
+                                        {a.parent.firstName} {a.parent.lastName} <br/>
+                                        <span style={{ fontSize: '0.8rem', fontWeight: 'normal', opacity: 0.9 }}>({schedule})</span>
+                                      </div>
+                                    );
+                                  })
+                                : '✗ Non rempli'}
+                            </div>
+                          )}
+                          {!isClosed && week.status !== 'PUBLISHED' && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              {isDouble ? <Users size={16} /> : <ShieldBan size={16} style={{ opacity: 0 }} />}
+                              {slot.assignments && slot.assignments.length > 0 
+                                ? slot.assignments.map(a => a.parent.firstName).join(' & ')
+                                : 'Non rempli'}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Section d'information sur les enfants présents, dispos et absents */}
                       {!isClosed && (
