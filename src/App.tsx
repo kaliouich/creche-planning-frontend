@@ -67,7 +67,7 @@ function App() {
     localStorage.removeItem('userMeta');
     setUser(null);
     // Redirection dure pour nettoyer la mémoire
-    window.location.href = '/login';
+    window.location.href = '/planning/login';
   };
 
   if (loading) {

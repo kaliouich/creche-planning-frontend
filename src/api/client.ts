@@ -48,11 +48,11 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     // Si l'API retourne 401 (Non autorisé) et qu'on n'est pas déjà sur la page de login
-    if (error.response?.status === 401 && window.location.pathname !== '/login') {
+    if (error.response?.status === 401 && !window.location.pathname.endsWith('/login')) {
       // Nettoyer le localStorage pour éviter une boucle de redirection infinie
       localStorage.removeItem('userMeta');
       // Redirection dure vers le login pour nettoyer l'état client complet
-      window.location.href = '/login';
+      window.location.href = '/planning/login';
     }
     return Promise.reject(error);
   }
