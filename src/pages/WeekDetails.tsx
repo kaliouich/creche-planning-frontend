@@ -20,6 +20,7 @@ interface Child {
   lastName: string;
   defaultPresences?: { dayOfWeek: string; halfDay: string }[];
   score?: number;
+  isActive?: boolean;
   ageGroup?: 'PETIT' | 'GRAND';
   parent?: {
     id: string;
@@ -280,36 +281,26 @@ export default function WeekDetails() {
                               .filter(a => a.isAvailable)
                               .map(a => a.child.firstName);
                             
-                            // 1. Absents déclarés (ChildPresence = false)
-                            const declaredAbsents = (slot.childPresences || [])
-                              .filter(cp => !cp.isPresent)
-                              .map(cp => cp.child.id);
-                              
-                            // 2. Non-accueillis (enfant ne vient pas cette demi-journée)
-                            const notEnrolled = children.filter(c => {
-                              const isEnrolled = c.defaultPresences?.some(dp => dp.dayOfWeek === day && dp.halfDay === halfDay);
-                              return !isEnrolled;
-                            });
-
-                            // Calcul des absents totaux
-                            const absentNames: string[] = [];
-                            declaredAbsents.forEach(childId => {
-                              const c = children.find(x => x.id === childId);
-                              if (c && !notEnrolled.some(ne => ne.id === c.id)) absentNames.push(c.firstName);
-                            });
-                            notEnrolled.forEach(c => absentNames.push(c.firstName));
-                            
                             // Calcul des présents
-                            const presentChildren = children
-                              .filter(c => !notEnrolled.some(ne => ne.id === c.id)) // is enrolled
-                              .filter(c => !declaredAbsents.includes(c.id)); // is not marked absent
-                              
-                            const grandsPresNames = presentChildren.filter(c => c.ageGroup !== 'PETIT').map(c => c.firstName);
-                            const petitsPresNames = presentChildren.filter(c => c.ageGroup === 'PETIT').map(c => c.firstName);
+                            const activeChildren = children.filter((c: Child) => c.isActive);
+                            const petitsPresNames: string[] = [];
+                            const grandsPresNames: string[] = [];
+                            const petitsAbsNames: string[] = [];
+                            const grandsAbsNames: string[] = [];
                             
-                            const absentChildren = children.filter(c => absentNames.includes(c.firstName));
-                            const grandsAbsNames = absentChildren.filter(c => c.ageGroup !== 'PETIT').map(c => c.firstName);
-                            const petitsAbsNames = absentChildren.filter(c => c.ageGroup === 'PETIT').map(c => c.firstName);
+                            activeChildren.forEach((child: Child) => {
+                              const override = slot.childPresences?.find((cp: any) => cp.child.id === child.id);
+                              const isEnrolled = child.defaultPresences?.some((dp: any) => dp.dayOfWeek === day && dp.halfDay === halfDay);
+                              const isPresent = override ? override.isPresent : isEnrolled;
+                              
+                              if (isPresent) {
+                                if (child.ageGroup === 'PETIT') petitsPresNames.push(child.firstName);
+                                else grandsPresNames.push(child.firstName);
+                              } else {
+                                if (child.ageGroup === 'PETIT') petitsAbsNames.push(child.firstName);
+                                else grandsAbsNames.push(child.firstName);
+                              }
+                            });
                             
                             return (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
@@ -394,10 +385,33 @@ export default function WeekDetails() {
                   <tr>
                     <th style={{ padding: '0.5rem', borderBottom: '1px solid var(--color-glass-border)' }}></th>
                     <th style={{ padding: '0.5rem', borderBottom: '1px solid var(--color-glass-border)' }}></th>
-                    {DAYS.flatMap(day => [
-                      <th key={`${day}-MORNING`} style={{ padding: '0.5rem', borderBottom: '1px solid var(--color-glass-border)', borderLeft: '1px solid var(--color-glass-border)', fontWeight: 'normal', color: 'var(--color-text-secondary)' }}>Matin</th>,
-                      <th key={`${day}-AFTERNOON`} style={{ padding: '0.5rem', borderBottom: '1px solid var(--color-glass-border)', fontWeight: 'normal', color: 'var(--color-text-secondary)' }}>Aprèm</th>
-                    ])}
+                    {DAYS.flatMap(day => {
+                      return HALF_DAYS.map(halfDay => {
+                        const slot = week.slots.find(s => s.dayOfWeek === day && s.halfDay === halfDay);
+                        let petitsPres = 0, grandsPres = 0, petitsAbs = 0, grandsAbs = 0;
+                        const activeChildren = children.filter((c: Child) => c.isActive);
+                        activeChildren.forEach((child: Child) => {
+                          const override = slot?.childPresences?.find((cp: any) => cp.child.id === child.id);
+                          const isEnrolled = child.defaultPresences?.some((dp: any) => dp.dayOfWeek === day && dp.halfDay === halfDay);
+                          const isPresent = override ? override.isPresent : isEnrolled;
+                          
+                          if (isPresent) {
+                            if (child.ageGroup === 'PETIT') petitsPres++; else grandsPres++;
+                          } else {
+                            if (child.ageGroup === 'PETIT') petitsAbs++; else grandsAbs++;
+                          }
+                        });
+
+                        return (
+                          <th key={`stats-${day}-${halfDay}`} style={{ padding: '0.5rem', borderBottom: '2px solid var(--color-glass-border)', borderLeft: halfDay === 'MORNING' ? '1px solid var(--color-glass-border)' : 'none', fontSize: '0.75rem', fontWeight: 'normal', lineHeight: '1.2' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span style={{ color: 'var(--color-success)' }}>{petitsPres}P {grandsPres}G (Présents)</span>
+                              <span style={{ color: 'var(--color-secondary)' }}>{petitsAbs}P {grandsAbs}G (Absents)</span>
+                            </div>
+                          </th>
+                        );
+                      });
+                    })}
                   </tr>
                 </thead>
                 <tbody>

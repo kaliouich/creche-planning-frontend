@@ -7,6 +7,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import ParentDashboard from './pages/ParentDashboard';
 import ChildrenManagement from './pages/ChildrenManagement';
 import WeekDetails from './pages/WeekDetails';
+import { ScoreAdjustments } from './pages/ScoreAdjustments';
 
 // Composant Navbar partagé
 const Navbar = ({ onLogout, user }: { onLogout: () => void, user: { firstName: string; lastName: string; role: string } }) => (
@@ -78,7 +79,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/planning">
       {user && <Navbar onLogout={handleLogout} user={user} />}
       <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
         <Routes>
@@ -110,6 +111,14 @@ function App() {
             element={
               !user ? <Navigate to="/login" /> :
               user.role === 'ADMIN' ? <WeekDetails /> :
+              <Navigate to="/" />
+            } 
+          />
+          <Route 
+            path="/admin/gestion-perms" 
+            element={
+              !user ? <Navigate to="/login" /> :
+              user.role === 'ADMIN' ? <ScoreAdjustments /> :
               <Navigate to="/" />
             } 
           />

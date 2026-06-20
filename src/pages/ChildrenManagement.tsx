@@ -13,6 +13,8 @@ interface Child {
     id: string;
     email: string;
     secondEmail?: string | null;
+    firstName?: string;
+    lastName?: string;
   };
 }
 
@@ -28,7 +30,8 @@ export default function ChildrenManagement() {
   
   // Form state
   const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [parent1Name, setParent1Name] = useState('');
+  const [parent2Name, setParent2Name] = useState('');
   const [ageGroup, setAgeGroup] = useState<'PETIT' | 'GRAND'>('GRAND');
   const [siblingId, setSiblingId] = useState('');
   
@@ -48,7 +51,7 @@ export default function ChildrenManagement() {
     const fetchData = async () => {
       try {
         const response = await apiClient.get('/children');
-        setChildren(response.data);
+        setChildren(response.data.sort((a: Child, b: Child) => a.firstName.localeCompare(b.firstName)));
       } catch (err) {
         console.error("Erreur de chargement", err);
         setError("Impossible de charger les données");
@@ -73,7 +76,14 @@ export default function ChildrenManagement() {
   const handleEditClick = (child: Child) => {
     setEditingChildId(child.id);
     setFirstName(child.firstName);
-    setLastName(child.lastName);
+    
+    // Parse the parenthesis format "(khalil & saloua)" back to parent names if possible
+    let p1 = child.parent?.firstName || '';
+    let p2 = child.parent?.lastName || '';
+    
+    setParent1Name(p1);
+    setParent2Name(p2);
+    
     setAgeGroup(child.ageGroup);
     setSiblingId(''); // Pas possible de changer la fratrie en édition facilement, on la vide
     if (child.defaultPresences) {
@@ -88,7 +98,8 @@ export default function ChildrenManagement() {
   const handleCancelEdit = () => {
     setEditingChildId(null);
     setFirstName('');
-    setLastName('');
+    setParent1Name('');
+    setParent2Name('');
     setAgeGroup('GRAND');
     setSiblingId('');
     setParent1Email('');
@@ -102,19 +113,25 @@ export default function ChildrenManagement() {
     setError('');
 
     try {
+      const formattedLastName = parent2Name ? `(${parent1Name} & ${parent2Name})` : `(${parent1Name})`;
+
       if (editingChildId) {
         const response = await apiClient.put(`/children/${editingChildId}`, {
           firstName,
-          lastName,
+          lastName: formattedLastName,
+          parent1FirstName: parent1Name,
+          parent2FirstName: parent2Name,
           ageGroup,
           defaultPresences
         });
-        setChildren(prev => prev.map(c => c.id === editingChildId ? response.data : c).sort((a, b) => a.lastName.localeCompare(b.lastName)));
+        setChildren(prev => prev.map(c => c.id === editingChildId ? response.data : c).sort((a, b) => a.firstName.localeCompare(b.firstName)));
         handleCancelEdit();
       } else {
         let payload: any = { 
           firstName, 
-          lastName, 
+          lastName: formattedLastName,
+          parent1FirstName: parent1Name,
+          parent2FirstName: parent2Name,
           ageGroup,
           defaultPresences 
         };
@@ -127,7 +144,7 @@ export default function ChildrenManagement() {
         }
 
         const response = await apiClient.post('/children', payload);
-        setChildren(prev => [...prev, response.data].sort((a, b) => a.lastName.localeCompare(b.lastName)));
+        setChildren(prev => [...prev, response.data].sort((a, b) => a.firstName.localeCompare(b.firstName)));
         handleCancelEdit();
       }
     } catch (err: unknown) {
@@ -176,24 +193,40 @@ export default function ChildrenManagement() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
         
-        {/* Formulaire d'ajout */}
         <div className="glass-card">
           <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Plus size={20} /> {editingChildId ? 'Modifier un enfant' : 'Ajouter un enfant'}
           </h3>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label" htmlFor="firstName">Prénom</label>
+              <label className="form-label">Prénom de l'enfant <span style={{ color: 'var(--color-secondary)' }}>*</span></label>
               <input 
-                id="firstName" type="text" className="form-input" 
-                value={firstName} onChange={e => setFirstName(e.target.value)} required 
+                type="text" 
+                className="form-input" 
+                value={firstName} 
+                onChange={e => setFirstName(e.target.value)} 
+                required 
               />
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="lastName">Nom de famille</label>
+              <label className="form-label">Prénom du parent 1 <span style={{ color: 'var(--color-secondary)' }}>*</span></label>
               <input 
-                id="lastName" type="text" className="form-input" 
-                value={lastName} onChange={e => setLastName(e.target.value)} required 
+                type="text" 
+                className="form-input" 
+                value={parent1Name} 
+                onChange={e => setParent1Name(e.target.value)} 
+                required 
+                placeholder="Ex: Maman"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Prénom du parent 2 <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem', fontWeight: 'normal' }}>(Optionnel)</span></label>
+              <input 
+                type="text" 
+                className="form-input" 
+                value={parent2Name} 
+                onChange={e => setParent2Name(e.target.value)} 
+                placeholder="Ex: Papa"
               />
             </div>
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
@@ -272,7 +305,7 @@ export default function ChildrenManagement() {
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <label className="form-label">Jours d'accueil à la crèche</label>
               <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', display: 'block', marginBottom: '1rem' }}>
-                Cochez les demi-journées où l'enfant est présent à la crèche. Cela empêchera le parent de saisir des disponibilités sur les créneaux où l'enfant n'est pas accueilli.
+                Cochez les demi-journées où l'enfant est présent à la crèche.
               </span>
               
               <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr', gap: '0.5rem', alignItems: 'center' }}>
@@ -314,7 +347,6 @@ export default function ChildrenManagement() {
           </form>
         </div>
 
-        {/* Liste des enfants */}
         <div className="glass-card">
           <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Baby size={20} /> Enfants inscrits ({children.length})

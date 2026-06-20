@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
-import { Plus, ArrowRight, Users, Baby, TrendingUp, Loader2, Trash2, Settings } from 'lucide-react';
+import { Plus, ArrowRight, Users, Baby, TrendingUp, Loader2, Trash2, Settings, ClipboardList } from 'lucide-react';
 import { getWeekDateRange } from '../utils/date';
 
 interface Week {
@@ -173,6 +173,13 @@ export default function AdminDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1>Espace Coordinateur</h1>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button 
+            className="btn btn-outline" 
+            onClick={() => navigate('/admin/gestion-perms')}
+          >
+            <ClipboardList size={20} />
+            Gestion Perms
+          </button>
           <button 
             className="btn btn-outline" 
             onClick={() => navigate('/admin/children')}

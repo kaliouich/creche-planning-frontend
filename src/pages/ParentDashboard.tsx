@@ -11,6 +11,7 @@ interface Child {
   defaultPresences?: { dayOfWeek: string; halfDay: string }[];
   score?: number;
   parentId?: string;
+  isActive?: boolean;
   ageGroup?: 'PETIT' | 'GRAND';
 }
 
@@ -575,17 +576,18 @@ export default function ParentDashboard() {
                       let petitsAbs = 0;
                       let grandsAbs = 0;
 
-                      if (slot && slot.childPresences) {
-                        slot.childPresences.forEach((cp: any) => {
-                          const childInfo = childrenList.find(c => c.id === cp.child.id) || cp.child;
-                          const isPetit = childInfo.ageGroup === 'PETIT';
-                          if (cp.isPresent) {
-                            if (isPetit) petitsPres++; else grandsPres++;
-                          } else {
-                            if (isPetit) petitsAbs++; else grandsAbs++;
-                          }
-                        });
-                      }
+                      const activeChildren = childrenList.filter(c => c.isActive);
+                      activeChildren.forEach(child => {
+                        const override = slot?.childPresences?.find((cp: any) => cp.child.id === child.id);
+                        const isEnrolled = child.defaultPresences?.some((dp: any) => dp.dayOfWeek === day && dp.halfDay === halfDay);
+                        const isPresent = override ? override.isPresent : isEnrolled;
+                        
+                        if (isPresent) {
+                          if (child.ageGroup === 'PETIT') petitsPres++; else grandsPres++;
+                        } else {
+                          if (child.ageGroup === 'PETIT') petitsAbs++; else grandsAbs++;
+                        }
+                      });
 
                       return (
                         <th key={`stats-${day}-${halfDay}`} style={{ padding: '0.5rem', borderBottom: '2px solid var(--color-glass-border)', borderLeft: halfDay === 'MORNING' ? '1px solid var(--color-glass-border)' : 'none', fontSize: '0.75rem', fontWeight: 'normal', lineHeight: '1.2' }}>
