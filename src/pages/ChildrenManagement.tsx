@@ -400,18 +400,6 @@ export default function ChildrenManagement() {
                 </button>
               )}
             </div>
-            {editingChildId && (
-              <div style={{ marginTop: '1rem', textAlign: 'right' }}>
-                <button 
-                  type="button" 
-                  style={{ color: 'var(--color-secondary)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.9rem' }} 
-                  onClick={() => handleDeleteChild(editingChildId)}
-                  disabled={creating}
-                >
-                  Supprimer cet enfant
-                </button>
-              </div>
-            )}
           </form>
         </div>
 
@@ -440,13 +428,22 @@ export default function ChildrenManagement() {
                       {child.defaultPresences?.length || 0} demi-journées
                     </span>
                   </div>
-                  <button 
-                    className="btn btn-outline" 
-                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}
-                    onClick={() => handleEditClick(child)}
-                  >
-                    Modifier
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                      className="btn btn-outline" 
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}
+                      onClick={() => handleEditClick(child)}
+                    >
+                      Modifier
+                    </button>
+                    <button 
+                      className="btn btn-outline" 
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: 'var(--color-secondary)', borderColor: 'var(--color-secondary)' }}
+                      onClick={() => handleDeleteChild(child.id)}
+                    >
+                      Supprimer
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
