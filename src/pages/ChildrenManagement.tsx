@@ -27,6 +27,7 @@ export default function ChildrenManagement() {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   
   // Form state
   const [firstName, setFirstName] = useState('');
@@ -86,11 +87,15 @@ export default function ChildrenManagement() {
     
     setAgeGroup(child.ageGroup);
     setSiblingId(''); // Pas possible de changer la fratrie en édition facilement, on la vide
+    setParent1Email(child.parent?.email || '');
+    setParent2Email(child.parent?.secondEmail || '');
     if (child.defaultPresences) {
       setDefaultPresences(child.defaultPresences);
     } else {
       setDefaultPresences([]);
     }
+    setError('');
+    setSuccessMessage('');
     // Scroll to top to see form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -105,6 +110,36 @@ export default function ChildrenManagement() {
     setParent1Email('');
     setParent2Email('');
     setDefaultPresences(DAYS.flatMap(day => HALF_DAYS.map(halfDay => ({ dayOfWeek: day, halfDay }))));
+    setError('');
+  };
+
+  const handleDeleteChild = async (id: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet enfant ? Cette action est irréversible.')) {
+      return;
+    }
+    
+    setCreating(true);
+    setError('');
+    setSuccessMessage('');
+    
+    try {
+      await apiClient.delete(`/children/${id}`);
+      setChildren(prev => prev.filter(c => c.id !== id));
+      if (editingChildId === id) {
+        handleCancelEdit();
+      }
+      setSuccessMessage('Enfant supprimé avec succès.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { error?: string } } };
+        setError(axiosErr.response?.data?.error || 'Erreur lors de la suppression');
+      } else {
+        setError('Erreur réseau');
+      }
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,10 +157,14 @@ export default function ChildrenManagement() {
           parent1FirstName: parent1Name,
           parent2FirstName: parent2Name,
           ageGroup,
-          defaultPresences
+          defaultPresences,
+          parent1Email,
+          parent2Email
         });
         setChildren(prev => prev.map(c => c.id === editingChildId ? response.data : c).sort((a, b) => a.firstName.localeCompare(b.firstName)));
         handleCancelEdit();
+        setSuccessMessage('Enfant modifié avec succès.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         let payload: any = { 
           firstName, 
@@ -146,6 +185,8 @@ export default function ChildrenManagement() {
         const response = await apiClient.post('/children', payload);
         setChildren(prev => [...prev, response.data].sort((a, b) => a.firstName.localeCompare(b.firstName)));
         handleCancelEdit();
+        setSuccessMessage('Enfant ajouté avec succès.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
@@ -188,6 +229,19 @@ export default function ChildrenManagement() {
           fontWeight: 500
         }}>
           {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div style={{ 
+          backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+          color: '#10b981', 
+          padding: '1rem', 
+          borderRadius: 'var(--radius-md)',
+          marginBottom: '1.5rem',
+          fontWeight: 500
+        }}>
+          {successMessage}
         </div>
       )}
 
@@ -255,27 +309,29 @@ export default function ChildrenManagement() {
               </div>
             </div>
 
-            <div className="form-group" style={{ display: editingChildId ? 'none' : 'block' }}>
-              <label className="form-label" htmlFor="sibling">Fratrie (Optionnel)</label>
-              <div>
-                <label className="form-label" style={{ fontWeight: 'normal', fontSize: '0.85rem' }}>C'est le frère/sœur de...</label>
-                <select className="form-input" value={siblingId} onChange={e => setSiblingId(e.target.value)}>
-                  <option value="">-- Nouvelle famille --</option>
-                  {children.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.firstName} {c.lastName}
-                    </option>
-                  ))}
-                </select>
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
-                  Optionnel. Permet de lier cet enfant à un parent existant.
-                </p>
+            <div className="form-group">
+              <div style={{ display: editingChildId ? 'none' : 'block' }}>
+                <label className="form-label" htmlFor="sibling">Fratrie (Optionnel)</label>
+                <div>
+                  <label className="form-label" style={{ fontWeight: 'normal', fontSize: '0.85rem' }}>C'est le frère/sœur de...</label>
+                  <select className="form-input" value={siblingId} onChange={e => setSiblingId(e.target.value)}>
+                    <option value="">-- Nouvelle famille --</option>
+                    {children.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.firstName} {c.lastName}
+                      </option>
+                    ))}
+                  </select>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
+                    Optionnel. Permet de lier cet enfant à un parent existant.
+                  </p>
+                </div>
               </div>
               
               {!siblingId && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', backgroundColor: 'var(--color-bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginTop: '1rem' }}>
                   <div style={{ marginBottom: '-0.5rem' }}>
-                    <strong style={{ fontSize: '0.9rem' }}>Création du compte parent</strong>
+                    <strong style={{ fontSize: '0.9rem' }}>{editingChildId ? 'Informations de contact du parent' : 'Création du compte parent'}</strong>
                   </div>
                   <div>
                     <label className="form-label" style={{ fontSize: '0.85rem' }}>Email du Parent 1 <span style={{ color: 'var(--color-secondary)' }}>*</span></label>
@@ -344,6 +400,18 @@ export default function ChildrenManagement() {
                 </button>
               )}
             </div>
+            {editingChildId && (
+              <div style={{ marginTop: '1rem', textAlign: 'right' }}>
+                <button 
+                  type="button" 
+                  style={{ color: 'var(--color-secondary)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.9rem' }} 
+                  onClick={() => handleDeleteChild(editingChildId)}
+                  disabled={creating}
+                >
+                  Supprimer cet enfant
+                </button>
+              </div>
+            )}
           </form>
         </div>
 
