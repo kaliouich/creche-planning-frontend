@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { apiClient } from '../api/client';
-import { Baby, LogIn } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 
 interface LoginProps {
   onLogin: (user: { id: string; firstName: string; lastName: string; role: string }) => void;
@@ -36,9 +36,9 @@ export default function Login({ onLogin }: LoginProps) {
     <div className="flex-center animate-fade-in" style={{ minHeight: '80vh' }}>
       <div className="glass-card" style={{ width: '100%', maxWidth: '400px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <Baby size={48} color="var(--color-primary)" style={{ margin: '0 auto' }} />
-          <h1 style={{ marginTop: '1rem' }}>Bienvenue</h1>
-          <p style={{ color: 'var(--color-text-secondary)' }}>Connectez-vous à Crèche Planning</p>
+          <img src="/planning/logo.png" alt="Les Fruits de la Passion" style={{ height: '80px', objectFit: 'contain', margin: '0 auto', display: 'block', marginBottom: '1rem' }} />
+          <h1 style={{ marginTop: '1rem', fontSize: '1.5rem', fontWeight: 600 }}>Portail Gestion Permanences</h1>
+          <p style={{ color: 'var(--color-text-secondary)', marginTop: '0.5rem' }}>Connectez-vous à Crèche Planning</p>
         </div>
 
         {error && (
