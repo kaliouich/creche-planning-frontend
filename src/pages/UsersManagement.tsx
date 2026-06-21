@@ -29,6 +29,9 @@ export default function UsersManagement() {
   const [saving, setSaving] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
+  const userMetaStr = localStorage.getItem('userMeta');
+  const currentUser = userMetaStr ? JSON.parse(userMetaStr) : null;
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -141,9 +144,11 @@ export default function UsersManagement() {
                   <button className="btn btn-outline" onClick={() => openEditModal(u)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
                     Modifier
                   </button>
-                  <button className="btn btn-outline" onClick={() => setUserToDelete(u)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: 'var(--color-error)', borderColor: 'var(--color-error)' }}>
-                    Supprimer
-                  </button>
+                  {currentUser?.id !== u.id && (
+                    <button className="btn btn-outline" onClick={() => setUserToDelete(u)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: 'var(--color-error)', borderColor: 'var(--color-error)' }}>
+                      Supprimer
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -231,7 +236,7 @@ export default function UsersManagement() {
               <button type="button" className="btn btn-outline" onClick={() => setUserToDelete(null)}>
                 Annuler
               </button>
-              <button type="button" className="btn btn-primary" style={{ backgroundColor: 'var(--color-error)' }} onClick={handleDelete} disabled={saving}>
+              <button type="button" className="btn" style={{ backgroundColor: 'var(--color-error)', color: '#ffffff', border: 'none', padding: '0.6rem 1.2rem', borderRadius: '8px', cursor: 'pointer' }} onClick={handleDelete} disabled={saving}>
                 {saving ? 'Suppression...' : 'Supprimer définitivement'}
               </button>
             </div>
