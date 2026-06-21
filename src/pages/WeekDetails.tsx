@@ -74,7 +74,8 @@ export default function WeekDetails() {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -118,12 +119,12 @@ export default function WeekDetails() {
     }
   };
 
-  const handleNotifyParent = async (parentId?: string) => {
+  const handleNotifyParent = async (parentId?: string, parentName?: string) => {
     if (!parentId) return;
     try {
-      const response = await apiClient.post(`/users/${parentId}/notify`);
-      setSuccess(response.data.message || "Rappel envoyé avec succès.");
-      setTimeout(() => setSuccess(''), 5000);
+      await apiClient.post(`/users/${parentId}/notify`);
+      setToastMessage(`${parentName} a été notifié.`);
+      setTimeout(() => setToastMessage(''), 3000);
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
@@ -164,11 +165,7 @@ export default function WeekDetails() {
           </div>
         </h1>
 
-      {success && (
-        <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--color-success)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
-          {success}
-        </div>
-      )}
+
 
       {error && (
         <div style={{ backgroundColor: 'rgba(244, 63, 94, 0.1)', color: 'var(--color-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
@@ -430,7 +427,7 @@ export default function WeekDetails() {
                             <span className="badge badge-error">En attente</span>
                             {child.parent?.id && (
                               <button 
-                                onClick={() => handleNotifyParent(child.parent?.id)}
+                                onClick={() => handleNotifyParent(child.parent?.id, child.parent?.firstName)}
                                 title="Envoyer un rappel par email"
                                 style={{ 
                                   background: 'none', border: 'none', cursor: 'pointer', 
@@ -483,6 +480,24 @@ export default function WeekDetails() {
           );
         })()}
       </div>
+      
+      {toastMessage && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          backgroundColor: 'var(--color-success)',
+          color: 'white',
+          padding: '12px 24px',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 9999,
+          fontWeight: 600,
+          animation: 'fade-in 0.3s ease-out'
+        }}>
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }
