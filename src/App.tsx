@@ -23,6 +23,9 @@ const Navbar = ({ onLogout, user }: { onLogout: () => void, user: { firstName: s
       </div>
       
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        {(user.role === 'ADMIN' || user.role === 'PROFESSIONAL') && (
+          <Link to="/" className="btn btn-outline" style={{ padding: '0.4rem 1rem', border: 'none' }}>Tableau de bord</Link>
+        )}
         {user.role === 'ADMIN' && (
           <Link to="/admin/users" className="btn btn-outline" style={{ padding: '0.4rem 1rem', border: 'none' }}>Utilisateurs</Link>
         )}
@@ -121,7 +124,7 @@ function App() {
             path="/admin/weeks/:id" 
             element={
               !user ? <Navigate to="/login" /> :
-              user.role === 'ADMIN' ? <WeekDetails /> :
+              (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <WeekDetails /> :
               <Navigate to="/" />
             } 
           />
