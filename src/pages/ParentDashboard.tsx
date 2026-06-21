@@ -192,9 +192,8 @@ export default function ParentDashboard() {
         availabilities: payload,
         childId: selectedChild.id
       });
-      setSuccess('Disponibilités enregistrées avec succès !');
-      // Alert pour s'assurer que le parent voit la confirmation même s'il ne défile pas vers le haut
-      alert("Vos disponibilités ont été enregistrées avec succès !");
+      setSuccess('Vos disponibilités ont été enregistrées avec succès !');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       // Recharger le planning complet pour mettre à jour le tableau global
       await loadChildPlanning(selectedChild, openWeek.id);
     } catch (err: unknown) {
