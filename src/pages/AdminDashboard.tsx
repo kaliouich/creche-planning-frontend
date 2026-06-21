@@ -10,6 +10,7 @@ interface Week {
   year: number;
   status: string;
   needsRecalculation: boolean;
+  hasAssignments?: boolean;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -100,6 +101,10 @@ export default function AdminDashboard() {
         year,
       });
       setWeeks(prev => [response.data, ...prev]);
+      setActiveTab('ONGOING');
+      setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }, 100);
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
@@ -299,6 +304,8 @@ export default function AdminDashboard() {
                     className="btn btn-primary" 
                     style={{ flex: 1 }}
                     onClick={() => handleAdvanceStatus(week)}
+                    disabled={week.status === 'OPEN_TO_PARENTS' && !week.hasAssignments}
+                    title={week.status === 'OPEN_TO_PARENTS' && !week.hasAssignments ? "Générez d'abord le planning" : undefined}
                   >
                     <ArrowRight size={18} />
                     {NEXT_STATUS_LABEL[week.status]}
