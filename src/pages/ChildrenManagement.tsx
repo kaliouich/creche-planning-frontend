@@ -210,10 +210,6 @@ export default function ChildrenManagement() {
 
   return (
     <div className="animate-fade-in">
-      <button className="btn btn-outline" style={{ marginBottom: '2rem' }} onClick={() => navigate('/')}>
-        <ArrowLeft size={18} /> Retour au tableau de bord
-      </button>
-
       <div style={{ marginBottom: '2rem' }}>
         <h1>Gestion des Enfants</h1>
         <p style={{ color: 'var(--color-text-secondary)' }}>Ajoutez de nouveaux enfants et rattachez-les à leurs parents.</p>

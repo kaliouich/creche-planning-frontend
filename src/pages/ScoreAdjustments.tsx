@@ -104,13 +104,6 @@ export function ScoreAdjustments() {
               Cliquez sur les statuts pour ajuster manuellement les permanences effectuées dans le passé.
             </p>
           </div>
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => navigate('/')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-          >
-            <ArrowLeft size={18} /> Retour au tableau de bord
-          </button>
         </div>
       </div>
 
