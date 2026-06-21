@@ -27,6 +27,7 @@ export default function UsersManagement() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'ADMIN' | 'PROFESSIONAL' | 'PARENT'>('PARENT');
   const [saving, setSaving] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -86,6 +87,22 @@ export default function UsersManagement() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!userToDelete) return;
+    setSaving(true);
+    setError('');
+    try {
+      await apiClient.delete(`/users/${userToDelete.id}`);
+      setSuccess('Utilisateur supprimé avec succès.');
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Erreur lors de la suppression');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return <div className="flex-center" style={{ minHeight: '50vh' }}><p>Chargement...</p></div>;
 
   return (
@@ -120,9 +137,12 @@ export default function UsersManagement() {
                     {u.role === 'PROFESSIONAL' ? 'PRO' : u.role}
                   </span>
                 </td>
-                <td style={{ padding: '1rem' }}>
+                <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
                   <button className="btn btn-outline" onClick={() => openEditModal(u)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
                     Modifier
+                  </button>
+                  <button className="btn btn-outline" onClick={() => setUserToDelete(u)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: 'var(--color-error)', borderColor: 'var(--color-error)' }}>
+                    Supprimer
                   </button>
                 </td>
               </tr>
@@ -194,6 +214,27 @@ export default function UsersManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de suppression */}
+      {userToDelete && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '400px', backgroundColor: 'var(--color-bg-primary)' }}>
+            <h3 style={{ color: 'var(--color-error)' }}>Confirmer la suppression</h3>
+            <p style={{ marginTop: '1rem', color: 'var(--color-text-secondary)' }}>
+              Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{userToDelete.firstName} {userToDelete.lastName}</strong> ({userToDelete.email}) ?
+              Cette action est irréversible.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
+              <button type="button" className="btn btn-outline" onClick={() => setUserToDelete(null)}>
+                Annuler
+              </button>
+              <button type="button" className="btn btn-primary" style={{ backgroundColor: 'var(--color-error)' }} onClick={handleDelete} disabled={saving}>
+                {saving ? 'Suppression...' : 'Supprimer définitivement'}
+              </button>
+            </div>
           </div>
         </div>
       )}
