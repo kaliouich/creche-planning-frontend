@@ -465,9 +465,7 @@ export default function ParentDashboard() {
           )}
         </div>
         
-        {error && <div style={{ backgroundColor: 'rgba(244,63,94,0.1)', color: 'var(--color-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>{error}</div>}
-        {success && <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: 'var(--color-success)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle2 size={18} /> {success}</div>}
-
+        {/* Messages d'erreur et de succès déplacés près du bouton d'enregistrement */}
         {!openWeek || availableFormWeeks.length === 0 ? (
           <div style={{ border: '2px dashed var(--color-glass-border)', borderRadius: 'var(--radius-lg)', padding: '3rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
             <Calendar size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
@@ -530,6 +528,8 @@ export default function ParentDashboard() {
             </div>
 
             <div style={{ marginTop: '2rem' }}>
+              {error && <div style={{ backgroundColor: 'rgba(244,63,94,0.1)', color: 'var(--color-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontWeight: 500 }}>{error}</div>}
+              {success && <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: 'var(--color-success)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500, border: '1px solid var(--color-success)' }}><CheckCircle2 size={24} /> {success}</div>}
               <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={handleSubmit} disabled={saving}>
                 {saving ? <Loader2 size={18} className="spin" /> : <Save size={18} />}
                 {saving ? 'Enregistrement...' : 'Enregistrer mes disponibilités'}
