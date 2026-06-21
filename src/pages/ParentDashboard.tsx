@@ -445,6 +445,9 @@ export default function ParentDashboard() {
         </div>
       </div>
 
+      {error && <div style={{ backgroundColor: 'rgba(244,63,94,0.1)', color: 'var(--color-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '2rem', fontWeight: 500 }}>{error}</div>}
+      {success && <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: 'var(--color-success)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500, border: '1px solid var(--color-success)' }}><CheckCircle2 size={24} /> {success}</div>}
+
       <div className="glass-card">
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
           <h3 style={{ margin: 0 }}>Disponibilités</h3>
@@ -529,10 +532,8 @@ export default function ParentDashboard() {
             </div>
 
             <div style={{ marginTop: '2rem' }}>
-              {error && <div style={{ backgroundColor: 'rgba(244,63,94,0.1)', color: 'var(--color-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontWeight: 500 }}>{error}</div>}
-              {success && <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: 'var(--color-success)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500, border: '1px solid var(--color-success)' }}><CheckCircle2 size={24} /> {success}</div>}
-              <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={handleSubmit} disabled={saving}>
-                {saving ? <Loader2 size={18} className="spin" /> : <Save size={18} />}
+              <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '1rem', fontSize: '1.1rem' }} onClick={handleSubmit} disabled={saving}>
+                {saving ? <Loader2 size={20} className="spin" /> : <Save size={20} />}
                 {saving ? 'Enregistrement...' : 'Enregistrer mes disponibilités'}
               </button>
             </div>
