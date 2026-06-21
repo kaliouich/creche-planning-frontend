@@ -77,19 +77,18 @@ export default function WeekDetails() {
   const [error, setError] = useState('');
 
   const [toastMessage, setToastMessage] = useState<{text: string, type: 'success' | 'warning'} | null>(null);
+  const [generationMessage, setGenerationMessage] = useState<{text: string, type: 'success' | 'warning'} | null>(null);
 
   useEffect(() => {
     if (location.state && location.state.generationResult) {
       const res = location.state.generationResult;
       const hasUnfilled = res.unfilledSlots && res.unfilledSlots.length > 0;
       
-      setToastMessage({
+      setGenerationMessage({
         text: hasUnfilled ? "Généré avec des besoins (certaines permanences ne sont pas remplies)" : "Généré avec succès (toutes les demandes sont remplies)",
         type: hasUnfilled ? 'warning' : 'success'
       });
 
-      setTimeout(() => setToastMessage(null), 6000);
-      
       // Clean up state so refresh doesn't show it again
       window.history.replaceState({}, document.title);
     }
@@ -182,6 +181,20 @@ export default function WeekDetails() {
             ({getWeekDateRange(week.weekNumber, week.year)})
           </div>
         </h1>
+
+      {generationMessage && (
+        <div style={{ 
+          backgroundColor: generationMessage.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(234, 179, 8, 0.1)', 
+          color: generationMessage.type === 'success' ? 'var(--color-success)' : '#eab308', 
+          padding: '1rem', 
+          borderRadius: 'var(--radius-md)', 
+          marginBottom: '1.5rem',
+          fontWeight: 600,
+          border: `1px solid ${generationMessage.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(234, 179, 8, 0.3)'}`
+        }}>
+          {generationMessage.text}
+        </div>
+      )}
 
 
 
