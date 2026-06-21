@@ -192,10 +192,10 @@ export default function ParentDashboard() {
         availabilities: payload,
         childId: selectedChild.id
       });
-      setSuccess('Vos disponibilités ont été enregistrées avec succès !');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       // Recharger le planning complet pour mettre à jour le tableau global
       await loadChildPlanning(selectedChild, openWeek.id);
+      setSuccess('Vos disponibilités ont été enregistrées avec succès !');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
