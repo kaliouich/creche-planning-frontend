@@ -279,35 +279,31 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </div>
-                {!isPro && (
-                  <button 
-                    className="btn btn-outline" 
-                    style={{ padding: '0.4rem', color: 'var(--color-secondary)', borderColor: 'var(--color-secondary)' }}
-                    onClick={() => handleDelete(week.id)}
-                    title="Supprimer la semaine"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
-
-              {!isPro && (
                 <button 
                   className="btn btn-outline" 
-                  style={{ width: '100%', marginBottom: '1rem', justifyContent: 'center' }}
-                  onClick={() => navigate(`/admin/weeks/${week.id}`)}
+                  style={{ padding: '0.4rem', color: 'var(--color-secondary)', borderColor: 'var(--color-secondary)' }}
+                  onClick={() => handleDelete(week.id)}
+                  title="Supprimer la semaine"
                 >
-                  <Settings size={18} />
-                  {week.status === 'PREPARATION' 
-                    ? 'Configurer les créneaux' 
-                    : week.status === 'OPEN_TO_PARENTS'
-                      ? 'Consulter le remplissage'
-                      : 'Voir le planning'}
+                  <Trash2 size={16} />
                 </button>
-              )}
+              </div>
+
+              <button 
+                className="btn btn-outline" 
+                style={{ width: '100%', marginBottom: '1rem', justifyContent: 'center' }}
+                onClick={() => navigate(`/admin/weeks/${week.id}`)}
+              >
+                <Settings size={18} />
+                {week.status === 'PREPARATION' 
+                  ? 'Configurer les créneaux' 
+                  : week.status === 'OPEN_TO_PARENTS'
+                    ? 'Consulter le remplissage'
+                    : 'Voir le planning'}
+              </button>
 
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {!isPro && NEXT_STATUS[week.status] && (
+                {(!isPro || week.status === 'PREPARATION') && NEXT_STATUS[week.status] && (
                   <button 
                     id={`advance-${week.id}`}
                     className="btn btn-primary" 
