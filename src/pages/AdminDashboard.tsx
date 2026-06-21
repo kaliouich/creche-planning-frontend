@@ -45,6 +45,9 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const userMeta = JSON.parse(localStorage.getItem('userMeta') || '{}');
+  const isPro = userMeta.role === 'PROFESSIONAL';
+
   const upcomingWeeks = useMemo(() => {
     const weeksList = [];
     const now = new Date();
@@ -178,13 +181,15 @@ export default function AdminDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1>Espace Coordinateur</h1>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button 
-            className="btn btn-outline" 
-            onClick={() => navigate('/admin/gestion-perms')}
-          >
-            <ClipboardList size={20} />
-            Gestion Perms
-          </button>
+          {!isPro && (
+            <button 
+              className="btn btn-outline" 
+              onClick={() => navigate('/admin/gestion-perms')}
+            >
+              <ClipboardList size={20} />
+              Gestion Perms
+            </button>
+          )}
           <button 
             className="btn btn-outline" 
             onClick={() => navigate('/admin/children')}
@@ -274,31 +279,35 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </div>
-                <button 
-                  className="btn btn-outline" 
-                  style={{ padding: '0.4rem', color: 'var(--color-secondary)', borderColor: 'var(--color-secondary)' }}
-                  onClick={() => handleDelete(week.id)}
-                  title="Supprimer la semaine"
-                >
-                  <Trash2 size={16} />
-                </button>
+                {!isPro && (
+                  <button 
+                    className="btn btn-outline" 
+                    style={{ padding: '0.4rem', color: 'var(--color-secondary)', borderColor: 'var(--color-secondary)' }}
+                    onClick={() => handleDelete(week.id)}
+                    title="Supprimer la semaine"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
 
-              <button 
-                className="btn btn-outline" 
-                style={{ width: '100%', marginBottom: '1rem', justifyContent: 'center' }}
-                onClick={() => navigate(`/admin/weeks/${week.id}`)}
-              >
-                <Settings size={18} />
-                {week.status === 'PREPARATION' 
-                  ? 'Configurer les créneaux' 
-                  : week.status === 'OPEN_TO_PARENTS'
-                    ? 'Consulter le remplissage'
-                    : 'Voir le planning'}
-              </button>
+              {!isPro && (
+                <button 
+                  className="btn btn-outline" 
+                  style={{ width: '100%', marginBottom: '1rem', justifyContent: 'center' }}
+                  onClick={() => navigate(`/admin/weeks/${week.id}`)}
+                >
+                  <Settings size={18} />
+                  {week.status === 'PREPARATION' 
+                    ? 'Configurer les créneaux' 
+                    : week.status === 'OPEN_TO_PARENTS'
+                      ? 'Consulter le remplissage'
+                      : 'Voir le planning'}
+                </button>
+              )}
 
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {NEXT_STATUS[week.status] && (
+                {!isPro && NEXT_STATUS[week.status] && (
                   <button 
                     id={`advance-${week.id}`}
                     className="btn btn-primary" 
@@ -312,7 +321,7 @@ export default function AdminDashboard() {
                   </button>
                 )}
                 
-                {week.status === 'OPEN_TO_PARENTS' && (
+                {!isPro && week.status === 'OPEN_TO_PARENTS' && (
                   <button 
                     id={`generate-${week.id}`}
                     className={`btn ${week.needsRecalculation ? 'btn-primary' : 'btn-outline'}`}

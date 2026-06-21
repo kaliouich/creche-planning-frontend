@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 
 import { apiClient } from './api/client';
 import Login from './pages/Login';
@@ -8,17 +8,28 @@ import ParentDashboard from './pages/ParentDashboard';
 import ChildrenManagement from './pages/ChildrenManagement';
 import WeekDetails from './pages/WeekDetails';
 import { ScoreAdjustments } from './pages/ScoreAdjustments';
+import UsersManagement from './pages/UsersManagement';
+import Profile from './pages/Profile';
 
 // Composant Navbar partagé
 const Navbar = ({ onLogout, user }: { onLogout: () => void, user: { firstName: string; lastName: string; role: string } }) => (
   <nav className="navbar">
     <div className="container navbar-content">
       <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <img src="/planning/logo.png" alt="Les Fruits de la Passion" style={{ height: '40px', objectFit: 'contain' }} />
-        <span style={{ display: 'none' }}>Crèche Planning</span>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+          <img src="/planning/logo.png" alt="Les Fruits de la Passion" style={{ height: '40px', objectFit: 'contain' }} />
+          <span style={{ display: 'none' }}>Crèche Planning</span>
+        </Link>
       </div>
+      
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <span style={{ fontWeight: 500 }}>{user.firstName} {user.lastName} ({user.role})</span>
+        {user.role === 'ADMIN' && (
+          <Link to="/admin/users" className="btn btn-outline" style={{ padding: '0.4rem 1rem', border: 'none' }}>Utilisateurs</Link>
+        )}
+        {(user.role === 'ADMIN' || user.role === 'PROFESSIONAL') && (
+          <Link to="/profile" className="btn btn-outline" style={{ padding: '0.4rem 1rem', border: 'none' }}>Profil</Link>
+        )}
+        <span style={{ fontWeight: 500, marginLeft: '1rem' }}>{user.firstName} {user.lastName} ({user.role})</span>
         <button className="btn btn-outline" onClick={onLogout} style={{ padding: '0.4rem 1rem' }}>
           Déconnexion
         </button>
@@ -92,7 +103,7 @@ function App() {
             path="/" 
             element={
               !user ? <Navigate to="/login" /> :
-              user.role === 'ADMIN' ? <AdminDashboard /> :
+              (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <AdminDashboard /> :
               <ParentDashboard />
             } 
           />
@@ -101,7 +112,7 @@ function App() {
             path="/admin/children" 
             element={
               !user ? <Navigate to="/login" /> :
-              user.role === 'ADMIN' ? <ChildrenManagement /> :
+              (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <ChildrenManagement /> :
               <Navigate to="/" />
             } 
           />
@@ -119,6 +130,22 @@ function App() {
             element={
               !user ? <Navigate to="/login" /> :
               user.role === 'ADMIN' ? <ScoreAdjustments /> :
+              <Navigate to="/" />
+            } 
+          />
+          <Route 
+            path="/admin/users" 
+            element={
+              !user ? <Navigate to="/login" /> :
+              user.role === 'ADMIN' ? <UsersManagement /> :
+              <Navigate to="/" />
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              !user ? <Navigate to="/login" /> :
+              (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <Profile /> :
               <Navigate to="/" />
             } 
           />
