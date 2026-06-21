@@ -270,7 +270,7 @@ export default function ChildrenManagement() {
                 value={parent1Name} 
                 onChange={e => setParent1Name(e.target.value)} 
                 required 
-                placeholder="Ex: Maman"
+                placeholder="Ex: Parent 1"
               />
             </div>
             <div className="form-group">
@@ -280,7 +280,7 @@ export default function ChildrenManagement() {
                 className="form-input" 
                 value={parent2Name} 
                 onChange={e => setParent2Name(e.target.value)} 
-                placeholder="Ex: Papa"
+                placeholder="Ex: Parent 2"
               />
             </div>
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
