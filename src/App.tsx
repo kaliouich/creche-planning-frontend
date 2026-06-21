@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Baby } from 'lucide-react';
+
 import { apiClient } from './api/client';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
@@ -13,9 +13,9 @@ import { ScoreAdjustments } from './pages/ScoreAdjustments';
 const Navbar = ({ onLogout, user }: { onLogout: () => void, user: { firstName: string; lastName: string; role: string } }) => (
   <nav className="navbar">
     <div className="container navbar-content">
-      <div className="brand">
-        <Baby size={32} />
-        <span>Crèche Planning</span>
+      <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <img src="/planning/logo.png" alt="Les Fruits de la Passion" style={{ height: '40px', objectFit: 'contain' }} />
+        <span style={{ display: 'none' }}>Crèche Planning</span>
       </div>
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
         <span style={{ fontWeight: 500 }}>{user.firstName} {user.lastName} ({user.role})</span>
