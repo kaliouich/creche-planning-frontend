@@ -142,7 +142,7 @@ export default function WeekDetails() {
     <div className="animate-fade-in">
         <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
           <button className="btn btn-outline" onClick={() => navigate('/')}>
-            <ArrowLeft size={20} /> Retour
+            <ArrowLeft size={20} /> {isEditable ? "Retour & Validation" : "Retour"}
           </button>
           <h1 style={{ margin: 0, fontSize: '1.8rem' }}>
             Semaine {week.weekNumber} <span style={{ fontSize: '1.2rem', color: 'var(--color-text-secondary)', fontWeight: 400 }}>({getWeekDateRange(week.weekNumber, week.year)})</span>
