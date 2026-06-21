@@ -260,15 +260,14 @@ export default function WeekDetails() {
                         </button>
                       ) : (
                         <div 
-                          className={`btn ${isClosed ? 'btn-outline' : 'btn-primary'}`}
+                          className="btn btn-primary"
                           style={{ 
                             justifyContent: 'center',
-                            borderColor: isClosed ? 'var(--color-secondary)' : undefined,
-                            color: isClosed ? 'var(--color-secondary)' : undefined,
                             cursor: 'default',
-                            fontWeight: week.status === 'PUBLISHED' && !isClosed && slot.assignments?.length ? 600 : undefined,
+                            fontWeight: 600,
                             padding: '0.5rem',
-                            height: 'auto'
+                            height: 'auto',
+                            opacity: isClosed ? 0.7 : 1
                           }}
                         >
                           {isClosed && 'Fermé'}
