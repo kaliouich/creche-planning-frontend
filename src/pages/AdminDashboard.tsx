@@ -139,8 +139,8 @@ export default function AdminDashboard() {
     setGenerating(weekId);
     setError('');
     try {
-      await apiClient.post(`/planning/generate/${weekId}`);
-      navigate(`/admin/weeks/${weekId}`);
+      const response = await apiClient.post(`/planning/generate/${weekId}`);
+      navigate(`/admin/weeks/${weekId}`, { state: { generationResult: response.data } });
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: string } } };

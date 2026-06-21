@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { ArrowLeft, Calendar, ShieldBan, Users, Loader2, Printer, Bell } from 'lucide-react';
 import { getWeekDateRange, getDateForDayOfWeek } from '../utils/date';
@@ -70,12 +70,30 @@ const HALF_DAY_LABELS: Record<string, string> = { MORNING: 'Matin', AFTERNOON: '
 export default function WeekDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [week, setWeek] = useState<Week | null>(null);
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [toastMessage, setToastMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState<{text: string, type: 'success' | 'warning'} | null>(null);
+
+  useEffect(() => {
+    if (location.state && location.state.generationResult) {
+      const res = location.state.generationResult;
+      const hasUnfilled = res.unfilledSlots && res.unfilledSlots.length > 0;
+      
+      setToastMessage({
+        text: hasUnfilled ? "Généré avec des besoins (certaines permanences ne sont pas remplies)" : "Généré avec succès (toutes les demandes sont remplies)",
+        type: hasUnfilled ? 'warning' : 'success'
+      });
+
+      setTimeout(() => setToastMessage(null), 6000);
+      
+      // Clean up state so refresh doesn't show it again
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -123,8 +141,8 @@ export default function WeekDetails() {
     if (!parentId) return;
     try {
       await apiClient.post(`/users/${parentId}/notify`);
-      setToastMessage(`${parentName} a été notifié.`);
-      setTimeout(() => setToastMessage(''), 3000);
+      setToastMessage({ text: `${parentName} a été notifié.`, type: 'success' });
+      setTimeout(() => setToastMessage(null), 3000);
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
@@ -486,16 +504,19 @@ export default function WeekDetails() {
           position: 'fixed',
           bottom: '20px',
           right: '20px',
-          backgroundColor: 'var(--color-success)',
-          color: 'white',
-          padding: '12px 24px',
+          backgroundColor: toastMessage.type === 'success' ? 'var(--color-success)' : '#eab308',
+          color: toastMessage.type === 'success' ? 'white' : '#fff',
+          padding: '16px 24px',
           borderRadius: 'var(--radius-md)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
           zIndex: 9999,
           fontWeight: 600,
-          animation: 'fade-in 0.3s ease-out'
+          fontSize: '1.1rem',
+          animation: 'fade-in 0.3s ease-out',
+          maxWidth: '400px',
+          lineHeight: '1.4'
         }}>
-          {toastMessage}
+          {toastMessage.text}
         </div>
       )}
     </div>
