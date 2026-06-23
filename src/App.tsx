@@ -51,7 +51,14 @@ interface UserMeta {
   role: string;
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000, // 30 secondes — évite les re-fetch inutiles lors de la navigation
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   const [user, setUser] = useState<UserMeta | null>(null);
