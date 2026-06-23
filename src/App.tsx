@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { apiClient } from './api/client';
-import Login from './pages/Login';
-import AdminDashboard from './pages/AdminDashboard';
-import ParentDashboard from './pages/ParentDashboard';
-import ChildrenManagement from './pages/ChildrenManagement';
-import WeekDetails from './pages/WeekDetails';
-import { ScoreAdjustments } from './pages/ScoreAdjustments';
-import UsersManagement from './pages/UsersManagement';
-import Profile from './pages/Profile';
+import { ToastProvider } from './contexts/ToastContext';
+
+const Login = lazy(() => import('./pages/Login'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const ParentDashboard = lazy(() => import('./pages/ParentDashboard'));
+const ChildrenManagement = lazy(() => import('./pages/ChildrenManagement'));
+const WeekDetails = lazy(() => import('./pages/WeekDetails'));
+const ScoreAdjustments = lazy(() => import('./pages/ScoreAdjustments').then(m => ({ default: m.ScoreAdjustments })));
+const UsersManagement = lazy(() => import('./pages/UsersManagement'));
+const Profile = lazy(() => import('./pages/Profile'));
 
 // Composant Navbar partagé
 const Navbar = ({ onLogout, user }: { onLogout: () => void, user: { firstName: string; lastName: string; role: string } }) => (
@@ -47,6 +50,8 @@ interface UserMeta {
   lastName: string;
   role: string;
 }
+
+const queryClient = new QueryClient();
 
 function App() {
   const [user, setUser] = useState<UserMeta | null>(null);
@@ -93,68 +98,78 @@ function App() {
   }
 
   return (
+    <QueryClientProvider client={queryClient}>
+    <ToastProvider>
     <BrowserRouter basename="/planning">
       {user && <Navbar onLogout={handleLogout} user={user} />}
       <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
-        <Routes>
-          <Route 
-            path="/login" 
-            element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} 
-          />
-          
-          <Route 
-            path="/" 
-            element={
-              !user ? <Navigate to="/login" /> :
-              (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <AdminDashboard /> :
-              <ParentDashboard />
-            } 
-          />
+        <Suspense fallback={
+          <div className="flex-center" style={{ minHeight: '50vh' }}>
+            <div style={{ width: '40px', height: '40px', border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+          </div>
+        }>
+          <Routes>
+            <Route 
+              path="/login" 
+              element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} 
+            />
+            
+            <Route 
+              path="/" 
+              element={
+                !user ? <Navigate to="/login" /> :
+                (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <AdminDashboard /> :
+                <ParentDashboard />
+              } 
+            />
 
-          <Route 
-            path="/admin/children" 
-            element={
-              !user ? <Navigate to="/login" /> :
-              (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <ChildrenManagement /> :
-              <Navigate to="/" />
-            } 
-          />
+            <Route 
+              path="/admin/children" 
+              element={
+                !user ? <Navigate to="/login" /> :
+                (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <ChildrenManagement /> :
+                <Navigate to="/" />
+              } 
+            />
 
-          <Route 
-            path="/admin/weeks/:id" 
-            element={
-              !user ? <Navigate to="/login" /> :
-              (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <WeekDetails /> :
-              <Navigate to="/" />
-            } 
-          />
-          <Route 
-            path="/admin/gestion-perms" 
-            element={
-              !user ? <Navigate to="/login" /> :
-              user.role === 'ADMIN' ? <ScoreAdjustments /> :
-              <Navigate to="/" />
-            } 
-          />
-          <Route 
-            path="/admin/users" 
-            element={
-              !user ? <Navigate to="/login" /> :
-              user.role === 'ADMIN' ? <UsersManagement /> :
-              <Navigate to="/" />
-            } 
-          />
-          <Route 
-            path="/profile" 
-            element={
-              !user ? <Navigate to="/login" /> :
-              (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <Profile /> :
-              <Navigate to="/" />
-            } 
-          />
-        </Routes>
+            <Route 
+              path="/admin/weeks/:id" 
+              element={
+                !user ? <Navigate to="/login" /> :
+                (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <WeekDetails /> :
+                <Navigate to="/" />
+              } 
+            />
+            <Route 
+              path="/admin/gestion-perms" 
+              element={
+                !user ? <Navigate to="/login" /> :
+                user.role === 'ADMIN' ? <ScoreAdjustments /> :
+                <Navigate to="/" />
+              } 
+            />
+            <Route 
+              path="/admin/users" 
+              element={
+                !user ? <Navigate to="/login" /> :
+                user.role === 'ADMIN' ? <UsersManagement /> :
+                <Navigate to="/" />
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                !user ? <Navigate to="/login" /> :
+                (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <Profile /> :
+                <Navigate to="/" />
+              } 
+            />
+          </Routes>
+        </Suspense>
       </div>
     </BrowserRouter>
+    </ToastProvider>
+    </QueryClientProvider>
   );
 }
 

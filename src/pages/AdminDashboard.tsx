@@ -3,15 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { Plus, ArrowRight, Users, Baby, TrendingUp, Loader2, Trash2, Settings, ClipboardList } from 'lucide-react';
 import { getWeekDateRange } from '../utils/date';
-
-interface Week {
-  id: string;
-  weekNumber: number;
-  year: number;
-  status: string;
-  needsRecalculation: boolean;
-  hasAssignments?: boolean;
-}
+import type { Week } from '../types';
 
 const STATUS_LABELS: Record<string, string> = {
   PREPARATION: 'En Préparation',

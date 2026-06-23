@@ -1,82 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../api/client';
-import { ArrowLeft, Calendar, ShieldBan, Users, Loader2, Printer, Bell } from 'lucide-react';
-import { getWeekDateRange, getDateForDayOfWeek } from '../utils/date';
-
-interface Assignment {
-  id: string;
-  isManual: boolean;
-  parent: {
-    id: string;
-    firstName: string;
-    lastName: string;
-  };
-}
-
-interface Child {
-  id: string;
-  firstName: string;
-  lastName: string;
-  defaultPresences?: { dayOfWeek: string; halfDay: string }[];
-  score?: number;
-  isActive?: boolean;
-  ageGroup?: 'PETIT' | 'GRAND';
-  parent?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    secondEmail?: string | null;
-  };
-}
-
-interface Availability {
-  id: string;
-  isAvailable: boolean;
-  child: Child;
-}
-
-interface ChildPresence {
-  id: string;
-  isPresent: boolean;
-  child: Child;
-}
-
-interface Slot {
-  id: string;
-  dayOfWeek: string;
-  halfDay: string;
-  slotType: 'OPEN' | 'DOUBLE_PERM' | 'CLOSED';
-  requiredParents: number;
-  assignments: Assignment[];
-  availabilities?: Availability[];
-  childPresences?: ChildPresence[];
-}
-
-interface Week {
-  id: string;
-  weekNumber: number;
-  year: number;
-  status: string;
-  slots: Slot[];
-}
-
-const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
-const DAY_LABELS: Record<string, string> = { MONDAY: 'Lundi', TUESDAY: 'Mardi', WEDNESDAY: 'Mercredi', THURSDAY: 'Jeudi', FRIDAY: 'Vendredi' };
-const HALF_DAYS = ['MORNING', 'AFTERNOON'];
-const HALF_DAY_LABELS: Record<string, string> = { MORNING: 'Matin', AFTERNOON: 'Après-midi' };
+import { ArrowLeft, Loader2, Printer } from 'lucide-react';
+import { getWeekDateRange } from '../utils/date';
+import { SlotGrid } from '../components/planning/SlotGrid';
+import { AvailabilityTable } from '../components/planning/AvailabilityTable';
+import { useToast } from '../contexts/ToastContext';
+import type { Week, Child, Slot } from '../types';
 
 export default function WeekDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
+  
   const [week, setWeek] = useState<Week | null>(null);
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [toastMessage, setToastMessage] = useState<{text: string, type: 'success' | 'warning'} | null>(null);
   const [generationMessage, setGenerationMessage] = useState<{text: string, type: 'success' | 'warning'} | null>(null);
 
   useEffect(() => {
@@ -126,7 +68,7 @@ export default function WeekDetails() {
       
       setWeek(prev => prev ? {
         ...prev,
-        slots: prev.slots.map(s => s.id === slot.id ? updatedSlot : s)
+        slots: prev.slots?.map(s => s.id === slot.id ? updatedSlot : s)
       } : null);
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
@@ -140,8 +82,7 @@ export default function WeekDetails() {
     if (!parentId) return;
     try {
       await apiClient.post(`/users/${parentId}/notify`);
-      setToastMessage({ text: `${parentName} a été notifié.`, type: 'success' });
-      setTimeout(() => setToastMessage(null), 3000);
+      showToast(`${parentName} a été notifié.`, 'success');
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
@@ -196,8 +137,6 @@ export default function WeekDetails() {
         </div>
       )}
 
-
-
       {error && (
         <div style={{ backgroundColor: 'rgba(244, 63, 94, 0.1)', color: 'var(--color-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
           {error}
@@ -206,7 +145,7 @@ export default function WeekDetails() {
 
       <div className="glass-card">
         <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Calendar size={20} /> Créneaux de permanence
+          Créneaux de permanence
         </h3>
         
         {!isEditable && (
@@ -215,322 +154,19 @@ export default function WeekDetails() {
           </p>
         )}
 
-        <div className="planning-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {DAYS.map(day => (
-            <div className="grid-day-row" key={day} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 1fr', gap: '1rem', alignItems: 'start', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', paddingTop: '0.2rem' }}>
-                <strong style={{ fontSize: '1.1rem' }}>{DAY_LABELS[day]}</strong>
-                <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
-                  {getDateForDayOfWeek(week.weekNumber, week.year, day)}
-                </span>
-              </div>
-              
-              {HALF_DAYS.map(halfDay => {
-                const slot = week.slots.find(s => s.dayOfWeek === day && s.halfDay === halfDay);
-                if (!slot) return <div key={halfDay}>-</div>;
-
-                const isClosed = slot.slotType === 'CLOSED';
-                const isDouble = slot.slotType === 'DOUBLE_PERM';
-
-                return (
-                  <div key={slot.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>{HALF_DAY_LABELS[halfDay]}</span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
-                      {isEditable ? (
-                        <button 
-                          className={`btn ${isClosed ? 'btn-outline' : isDouble ? 'btn-primary' : 'btn-outline'}`}
-                          style={{ 
-                            justifyContent: 'center',
-                            borderColor: isClosed ? 'var(--color-secondary)' : undefined,
-                            color: isClosed ? 'var(--color-secondary)' : undefined,
-                            opacity: isEditable ? 1 : 0.8,
-                            cursor: isEditable ? 'pointer' : 'default',
-                            fontWeight: !isEditable && !isClosed && slot.assignments?.length ? 600 : undefined
-                          }}
-                          onClick={() => handleToggleSlotType(slot)}
-                          disabled={!isEditable}
-                        >
-                          {isClosed && <><ShieldBan size={16} /> Fermé</>}
-                          {!isClosed && (
-                            <>
-                              {isDouble && <><Users size={16} /> Double Perm</>}
-                              {!isDouble && 'Normal (1 Parent)'}
-                            </>
-                          )}
-                        </button>
-                      ) : (
-                        <div 
-                          className="btn btn-primary"
-                          style={{ 
-                            justifyContent: 'center',
-                            cursor: 'default',
-                            fontWeight: 600,
-                            padding: '0.5rem',
-                            height: 'auto',
-                            opacity: isClosed ? 0.7 : 1
-                          }}
-                        >
-                          {isClosed && 'Fermé'}
-                          {!isClosed && week.status === 'PUBLISHED' && (
-                            <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                              {slot.assignments && slot.assignments.length > 0 
-                                ? slot.assignments.map((a, index) => {
-                                    const schedule = index > 0 
-                                      ? '12h00 - 17h00' 
-                                      : (halfDay === 'MORNING' ? '8h00 - 13h00' : '13h45 - 18h45');
-                                    return (
-                                      <div key={a.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        <span>{a.parent.firstName} {a.parent.lastName}</span>
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 'normal', opacity: 0.9 }}>({schedule})</span>
-                                      </div>
-                                    );
-                                  })
-                                : '✗ Non rempli'}
-                            </div>
-                          )}
-                          {!isClosed && week.status !== 'PUBLISHED' && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              {isDouble ? <Users size={16} /> : <ShieldBan size={16} style={{ opacity: 0 }} />}
-                              {slot.assignments && slot.assignments.length > 0 
-                                ? slot.assignments.map(a => a.parent.firstName).join(' & ')
-                                : 'Non rempli'}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Section d'information sur les enfants présents, dispos et absents */}
-                      {!isClosed && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem', fontSize: '0.85rem', textAlign: 'left' }}>
-                          {(() => {
-                            // Calcul des dispos
-                            const availableNames = (slot.availabilities || [])
-                              .filter(a => a.isAvailable)
-                              .map(a => a.child.firstName);
-                            
-                            // Calcul des présents
-                            const activeChildren = children.filter((c: Child) => c.isActive);
-                            const petitsPresNames: string[] = [];
-                            const grandsPresNames: string[] = [];
-                            const petitsAbsNames: string[] = [];
-                            const grandsAbsNames: string[] = [];
-                            
-                            activeChildren.forEach((child: Child) => {
-                              const override = slot.childPresences?.find((cp: any) => cp.child.id === child.id);
-                              const isEnrolled = child.defaultPresences?.some((dp: any) => dp.dayOfWeek === day && dp.halfDay === halfDay);
-                              const isPresent = override ? override.isPresent : isEnrolled;
-                              
-                              if (isPresent) {
-                                if (child.ageGroup === 'PETIT') petitsPresNames.push(child.firstName);
-                                else grandsPresNames.push(child.firstName);
-                              } else {
-                                if (child.ageGroup === 'PETIT') petitsAbsNames.push(child.firstName);
-                                else grandsAbsNames.push(child.firstName);
-                              }
-                            });
-                            
-                            return (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
-                                {/* GRANDS */}
-                                <div>
-                                  <strong style={{ color: 'var(--color-primary)' }}>
-                                    Grands : {grandsPresNames.length} présent{grandsPresNames.length > 1 ? 's' : ''} / {grandsAbsNames.length} absent{grandsAbsNames.length > 1 ? 's' : ''}
-                                  </strong>
-                                  <div style={{ paddingLeft: '0.5rem', marginTop: '0.2rem', color: 'var(--color-text-secondary)' }}>
-                                    <div>- présents : {grandsPresNames.length > 0 ? grandsPresNames.join(', ') : '-'}</div>
-                                    <div>- absents : {grandsAbsNames.length > 0 ? grandsAbsNames.join(', ') : '-'}</div>
-                                  </div>
-                                </div>
-                                
-                                {/* PETITS */}
-                                <div>
-                                  <strong style={{ color: 'var(--color-secondary)' }}>
-                                    Petits : {petitsPresNames.length} présent{petitsPresNames.length > 1 ? 's' : ''} / {petitsAbsNames.length} absent{petitsAbsNames.length > 1 ? 's' : ''}
-                                  </strong>
-                                  <div style={{ paddingLeft: '0.5rem', marginTop: '0.2rem', color: 'var(--color-text-secondary)' }}>
-                                    <div>- présents : {petitsPresNames.length > 0 ? petitsPresNames.join(', ') : '-'}</div>
-                                    <div>- absents : {petitsAbsNames.length > 0 ? petitsAbsNames.join(', ') : '-'}</div>
-                                  </div>
-                                </div>
-                                
-                                {week.status !== 'PUBLISHED' && (
-                                  <div style={{ color: 'var(--color-success)', marginTop: '0.25rem' }}>
-                                    <strong>Parent Dispo: </strong> 
-                                    {availableNames.length > 0 ? availableNames.join(', ') : '-'}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Tableau des disponibilités des parents */}
-      <div className="glass-card no-print" style={{ marginTop: '2rem' }}>
-        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Users size={20} /> Tableau des disponibilités soumises
-        </h3>
-        
-        {(() => {
-          if (children.length === 0) {
-            return (
-              <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center', padding: '1rem' }}>
-                Aucun enfant inscrit dans la crèche.
-              </p>
-            );
-          }
-
-          // Déterminer qui a soumis (au moins 1 disponibilité envoyée sur la semaine)
-          const submittedChildIds = new Set<string>();
-          week.slots.forEach(slot => {
-            slot.availabilities?.forEach(avail => {
-              submittedChildIds.add(avail.child.id);
-            });
-          });
-
-          return (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.9rem' }}>
-                <thead>
-                  <tr>
-                    <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)', textAlign: 'left' }}>Enfant</th>
-                    <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)', textAlign: 'center' }}>Statut</th>
-                    {DAYS.map(day => (
-                      <th key={day} colSpan={2} style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)', borderLeft: '1px solid var(--color-glass-border)' }}>
-                        {DAY_LABELS[day]}
-                      </th>
-                    ))}
-                  </tr>
-                  <tr>
-                    <th style={{ padding: '0.5rem', borderBottom: '1px solid var(--color-glass-border)' }}></th>
-                    <th style={{ padding: '0.5rem', borderBottom: '1px solid var(--color-glass-border)' }}></th>
-                    {DAYS.flatMap(day => {
-                      return HALF_DAYS.map(halfDay => {
-                        const slot = week.slots.find(s => s.dayOfWeek === day && s.halfDay === halfDay);
-                        let petitsPres = 0, grandsPres = 0, petitsAbs = 0, grandsAbs = 0;
-                        const activeChildren = children.filter((c: Child) => c.isActive);
-                        activeChildren.forEach((child: Child) => {
-                          const override = slot?.childPresences?.find((cp: any) => cp.child.id === child.id);
-                          const isEnrolled = child.defaultPresences?.some((dp: any) => dp.dayOfWeek === day && dp.halfDay === halfDay);
-                          const isPresent = override ? override.isPresent : isEnrolled;
-                          
-                          if (isPresent) {
-                            if (child.ageGroup === 'PETIT') petitsPres++; else grandsPres++;
-                          } else {
-                            if (child.ageGroup === 'PETIT') petitsAbs++; else grandsAbs++;
-                          }
-                        });
-
-                        return (
-                          <th key={`stats-${day}-${halfDay}`} style={{ padding: '0.5rem', borderBottom: '2px solid var(--color-glass-border)', borderLeft: halfDay === 'MORNING' ? '1px solid var(--color-glass-border)' : 'none', fontSize: '0.75rem', fontWeight: 'normal', lineHeight: '1.2' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                              <span style={{ color: 'var(--color-success)' }}>{petitsPres}P {grandsPres}G (Présents)</span>
-                              <span style={{ color: 'var(--color-secondary)' }}>{petitsAbs}P {grandsAbs}G (Absents)</span>
-                            </div>
-                          </th>
-                        );
-                      });
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {children.map(child => {
-                    const hasSubmitted = submittedChildIds.has(child.id);
-                    return (
-                    <tr key={child.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <td style={{ padding: '0.75rem', textAlign: 'left', fontWeight: 600 }}>
-                        {child.firstName} {child.lastName.charAt(0)}.
-                      </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                        {hasSubmitted ? (
-                          <span className="badge badge-success">Saisi</span>
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                            <span className="badge badge-error">En attente</span>
-                            {child.parent?.id && (
-                              <button 
-                                onClick={() => handleNotifyParent(child.parent?.id, child.parent?.firstName)}
-                                title="Envoyer un rappel par email"
-                                style={{ 
-                                  background: 'none', border: 'none', cursor: 'pointer', 
-                                  color: 'var(--color-warning)', display: 'flex', alignItems: 'center', padding: '0.2rem' 
-                                }}
-                              >
-                                <Bell size={16} />
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                      {DAYS.flatMap(day => {
-                        return HALF_DAYS.map(halfDay => {
-                          const slot = week.slots.find(s => s.dayOfWeek === day && s.halfDay === halfDay);
-                          const avail = slot?.availabilities?.find(a => a.child?.id === child.id);
-                          const isEnrolled = child.defaultPresences?.some(dp => dp.dayOfWeek === day && dp.halfDay === halfDay) ?? true;
-                          
-                          let content = <span style={{ color: 'var(--color-text-secondary)', opacity: 0.3 }}>-</span>;
-                          
-                          if (!isEnrolled) {
-                            content = <span style={{ color: 'var(--color-text-secondary)', opacity: 0.3 }}>-</span>; // Non accueilli
-                          } else if (hasSubmitted) {
-                            // L'enfant est accueilli et a soumis.
-                            const presence = slot?.childPresences?.find(p => p.child.id === child.id);
-                            const isMarkedAbsent = presence && !presence.isPresent;
-                            
-                            if (isMarkedAbsent) {
-                              content = <span style={{ color: 'var(--color-secondary)' }}>✗</span>; // Absent déclaré
-                            } else if (avail && avail.isAvailable) {
-                              content = <span style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>✓</span>; // Dispo
-                            } else {
-                              content = <span style={{ color: 'var(--color-text-secondary)' }}>✗</span>; // Indispo
-                            }
-                          }
-
-                          return (
-                            <td key={`${day}-${halfDay}`} style={{ padding: '0.75rem', borderLeft: halfDay === 'MORNING' ? '1px solid var(--color-glass-border)' : 'none' }}>
-                              {content}
-                            </td>
-                          );
-                        });
-                      })}
-                    </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          );
-        })()}
+        <SlotGrid 
+          week={week} 
+          children={children} 
+          isEditable={isEditable} 
+          onToggleSlotType={handleToggleSlotType} 
+        />
       </div>
       
-      {toastMessage && (
-        <div style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          backgroundColor: toastMessage.type === 'success' ? 'var(--color-success)' : '#eab308',
-          color: toastMessage.type === 'success' ? 'white' : '#fff',
-          padding: '16px 24px',
-          borderRadius: 'var(--radius-md)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-          zIndex: 9999,
-          fontWeight: 600,
-          fontSize: '1.1rem',
-          animation: 'fade-in 0.3s ease-out',
-          maxWidth: '400px',
-          lineHeight: '1.4'
-        }}>
-          {toastMessage.text}
-        </div>
-      )}
+      <AvailabilityTable 
+        week={week} 
+        children={children} 
+        onNotifyParent={handleNotifyParent} 
+      />
     </div>
   );
 }

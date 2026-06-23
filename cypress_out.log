@@ -1,0 +1,248 @@
+
+> creche-planning-frontend@0.0.0 test:e2e:headless
+> xvfb-run cypress run
+
+Warning: The allowCypressEnv configuration option is enabled. This allows any browser code to read values from Cypress.env(). This is insecure and will be removed in a future major version.
+
+1. Replace Cypress.env() calls with cy.env() (for sensitive values) or Cypress.expose() (for public configuration)
+2. Set allowCypressEnv: false in your Cypress configuration to disable Cypress.env()
+
+Learn more: https://on.cypress.io/cypress-env-migration
+
+
+================================================================================
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        15.17.0                                                                        │
+  │ Browser:        Electron 138 (headless)                                                        │
+  │ Node Version:   v25.2.0 (/usr/local/bin/node)                                                  │
+  │ Specs:          2 found (admin_workflow.cy.ts, parent_workflow.cy.ts)                          │
+  │ Searched:       cypress/e2e/**/*.cy.{js,jsx,ts,tsx}                                            │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  admin_workflow.cy.ts                                                            (1 of 2)
+
+
+  Parcours Administrateur (End-to-End)
+    1) devrait permettre de créer une nouvelle semaine et de l'ouvrir aux parents
+
+
+  0 passing (30s)
+  1 failing
+
+  1) Parcours Administrateur (End-to-End)
+       devrait permettre de créer une nouvelle semaine et de l'ouvrir aux parents:
+     CypressError: `cy.visit()` failed trying to load:
+
+http://localhost:5173/planning/login
+
+We attempted to make an http request to this URL but the request failed without a response.
+
+We received this error at the network level:
+
+  > Error: ESOCKETTIMEDOUT
+
+Common situations why this would fail:
+  - you don't have internet access
+  - you forgot to run / boot your web server
+  - your web server isn't accessible
+  - you have weird network configuration settings on your computer
+      at <unknown> (http://localhost:5173/__cypress/runner/cypress_runner.js:135427:74)
+      at visitFailedByErr (http://localhost:5173/__cypress/runner/cypress_runner.js:135001:12)
+      at <unknown> (http://localhost:5173/__cypress/runner/cypress_runner.js:135426:11)
+      at tryCatcher (http://localhost:5173/__cypress/runner/cypress_runner.js:1777:23)
+      at Promise._settlePromiseFromHandler (http://localhost:5173/__cypress/runner/cypress_runner.js:1489:31)
+      at Promise._settlePromise (http://localhost:5173/__cypress/runner/cypress_runner.js:1546:18)
+      at Promise._settlePromise0 (http://localhost:5173/__cypress/runner/cypress_runner.js:1591:10)
+      at Promise._settlePromises (http://localhost:5173/__cypress/runner/cypress_runner.js:1667:18)
+      at _drainQueueStep (http://localhost:5173/__cypress/runner/cypress_runner.js:2377:12)
+      at _drainQueue (http://localhost:5173/__cypress/runner/cypress_runner.js:2370:9)
+      at Async._drainQueues (http://localhost:5173/__cypress/runner/cypress_runner.js:2386:5)
+      at Async.drainQueues (http://localhost:5173/__cypress/runner/cypress_runner.js:2256:14)
+  From Your Spec Code:
+      at Context.eval (webpack://creche-planning-frontend/./cypress/e2e/admin_workflow.cy.ts:35:7)
+  
+  From Node.js Internals:
+    Error: ESOCKETTIMEDOUT
+        at ClientRequest.<anonymous> (<embedded>:314:107429)
+        at Object.onceWrapper (node:events:633:28)
+        at ClientRequest.emit (node:events:519:28)
+        at Socket.emitRequestTimeout (node:_http_client:863:9)
+        at Object.onceWrapper (node:events:633:28)
+        at Socket.emit (node:events:531:35)
+        at Socket._onTimeout (node:net:604:8)
+        at listOnTimeout (node:internal/timers:588:17)
+        at process.processTimers (node:internal/timers:523:7)
+
+
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      1                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  1                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     30 seconds                                                                       │
+  │ Spec Ran:     admin_workflow.cy.ts                                                             │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  /data/homes/kah/creche-planning-frontend/cypress/screenshots/admin_workflow.cy.t     (1280x720)
+     s/Parcours Administrateur (End-to-End) -- devrait permettre de créer une nouvell               
+     e semaine et de l'ouvrir aux parents (failed).png                                              
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  parent_workflow.cy.ts                                                           (2 of 2)
+
+
+  Parcours Parent (End-to-End)
+    1) devrait connecter un parent et lui permettre de soumettre ses disponibilités
+    2) devrait empêcher un parent d'accéder à l'espace administrateur
+
+
+  0 passing (1m)
+  2 failing
+
+  1) Parcours Parent (End-to-End)
+       devrait connecter un parent et lui permettre de soumettre ses disponibilités:
+     CypressError: `cy.visit()` failed trying to load:
+
+http://localhost:5173/planning/login
+
+We attempted to make an http request to this URL but the request failed without a response.
+
+We received this error at the network level:
+
+  > Error: ESOCKETTIMEDOUT
+
+Common situations why this would fail:
+  - you don't have internet access
+  - you forgot to run / boot your web server
+  - your web server isn't accessible
+  - you have weird network configuration settings on your computer
+      at <unknown> (http://localhost:5173/__cypress/runner/cypress_runner.js:135427:74)
+      at visitFailedByErr (http://localhost:5173/__cypress/runner/cypress_runner.js:135001:12)
+      at <unknown> (http://localhost:5173/__cypress/runner/cypress_runner.js:135426:11)
+      at tryCatcher (http://localhost:5173/__cypress/runner/cypress_runner.js:1777:23)
+      at Promise._settlePromiseFromHandler (http://localhost:5173/__cypress/runner/cypress_runner.js:1489:31)
+      at Promise._settlePromise (http://localhost:5173/__cypress/runner/cypress_runner.js:1546:18)
+      at Promise._settlePromise0 (http://localhost:5173/__cypress/runner/cypress_runner.js:1591:10)
+      at Promise._settlePromises (http://localhost:5173/__cypress/runner/cypress_runner.js:1667:18)
+      at _drainQueueStep (http://localhost:5173/__cypress/runner/cypress_runner.js:2377:12)
+      at _drainQueue (http://localhost:5173/__cypress/runner/cypress_runner.js:2370:9)
+      at Async._drainQueues (http://localhost:5173/__cypress/runner/cypress_runner.js:2386:5)
+      at Async.drainQueues (http://localhost:5173/__cypress/runner/cypress_runner.js:2256:14)
+  From Your Spec Code:
+      at Context.eval (webpack://creche-planning-frontend/./cypress/e2e/parent_workflow.cy.ts:46:7)
+  
+  From Node.js Internals:
+    Error: ESOCKETTIMEDOUT
+        at ClientRequest.<anonymous> (<embedded>:314:107429)
+        at Object.onceWrapper (node:events:633:28)
+        at ClientRequest.emit (node:events:519:28)
+        at Socket.emitRequestTimeout (node:_http_client:863:9)
+        at Object.onceWrapper (node:events:633:28)
+        at Socket.emit (node:events:531:35)
+        at Socket._onTimeout (node:net:604:8)
+        at listOnTimeout (node:internal/timers:588:17)
+        at process.processTimers (node:internal/timers:523:7)
+
+  2) Parcours Parent (End-to-End)
+       devrait empêcher un parent d'accéder à l'espace administrateur:
+     CypressError: `cy.visit()` failed trying to load:
+
+http://localhost:5173/planning/login
+
+We attempted to make an http request to this URL but the request failed without a response.
+
+We received this error at the network level:
+
+  > Error: ESOCKETTIMEDOUT
+
+Common situations why this would fail:
+  - you don't have internet access
+  - you forgot to run / boot your web server
+  - your web server isn't accessible
+  - you have weird network configuration settings on your computer
+      at <unknown> (http://localhost:5173/__cypress/runner/cypress_runner.js:135427:74)
+      at visitFailedByErr (http://localhost:5173/__cypress/runner/cypress_runner.js:135001:12)
+      at <unknown> (http://localhost:5173/__cypress/runner/cypress_runner.js:135426:11)
+      at tryCatcher (http://localhost:5173/__cypress/runner/cypress_runner.js:1777:23)
+      at Promise._settlePromiseFromHandler (http://localhost:5173/__cypress/runner/cypress_runner.js:1489:31)
+      at Promise._settlePromise (http://localhost:5173/__cypress/runner/cypress_runner.js:1546:18)
+      at Promise._settlePromise0 (http://localhost:5173/__cypress/runner/cypress_runner.js:1591:10)
+      at Promise._settlePromises (http://localhost:5173/__cypress/runner/cypress_runner.js:1667:18)
+      at _drainQueueStep (http://localhost:5173/__cypress/runner/cypress_runner.js:2377:12)
+      at _drainQueue (http://localhost:5173/__cypress/runner/cypress_runner.js:2370:9)
+      at Async._drainQueues (http://localhost:5173/__cypress/runner/cypress_runner.js:2386:5)
+      at Async.drainQueues (http://localhost:5173/__cypress/runner/cypress_runner.js:2256:14)
+  From Your Spec Code:
+      at Context.eval (webpack://creche-planning-frontend/./cypress/e2e/parent_workflow.cy.ts:82:7)
+  
+  From Node.js Internals:
+    Error: ESOCKETTIMEDOUT
+        at ClientRequest.<anonymous> (<embedded>:314:107429)
+        at Object.onceWrapper (node:events:633:28)
+        at ClientRequest.emit (node:events:519:28)
+        at Socket.emitRequestTimeout (node:_http_client:863:9)
+        at Object.onceWrapper (node:events:633:28)
+        at Socket.emit (node:events:531:35)
+        at Socket._onTimeout (node:net:604:8)
+        at listOnTimeout (node:internal/timers:588:17)
+        at process.processTimers (node:internal/timers:523:7)
+
+
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        2                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      2                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  2                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 minute, 0 seconds                                                              │
+  │ Spec Ran:     parent_workflow.cy.ts                                                            │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  /data/homes/kah/creche-planning-frontend/cypress/screenshots/parent_workflow.cy.     (1280x720)
+     ts/Parcours Parent (End-to-End) -- devrait connecter un parent et lui permettre                
+     de soumettre ses disponibilités (failed).png                                                   
+  -  /data/homes/kah/creche-planning-frontend/cypress/screenshots/parent_workflow.cy.     (1280x720)
+     ts/Parcours Parent (End-to-End) -- devrait empêcher un parent d'accéder à l'espa               
+     ce administrateur (failed).png                                                                 
+
+
+================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped  
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ✖  admin_workflow.cy.ts                     00:30        1        -        1        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✖  parent_workflow.cy.ts                    01:00        2        -        2        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ✖  2 of 2 failed (100%)                     01:30        3        -        3        -        -  
+

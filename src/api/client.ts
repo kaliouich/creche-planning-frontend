@@ -28,10 +28,14 @@ apiClient.interceptors.request.use((config) => {
     let csrfToken = '';
     
     for (let cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (name === 'csrf-token' || name === '__Host-csrf-token') {
+      const parts = cookie.trim().split('=');
+      const name = parts[0];
+      const value = parts[1];
+      if (name === '__Host-csrf-token') {
         csrfToken = value;
-        break;
+        break; // Priority 1
+      } else if (name === 'csrf-token') {
+        csrfToken = value; // Keep looking in case __Host-csrf-token is further down
       }
     }
     

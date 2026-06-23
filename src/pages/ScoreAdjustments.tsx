@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { apiClient } from '../api/client';
-import { CheckCircle, XCircle, ArrowLeft, Info, Calendar, User } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-interface Week {
-  id: string;
-  weekNumber: number;
-  year: number;
-}
+// useNavigate removed
+import { apiClient } from '../api/client';
+import { CheckCircle, XCircle, Info, Calendar, User } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+
+import type { Child, Week } from '../types';
 
 interface ChildHistory {
   [key: string]: {
@@ -15,71 +13,76 @@ interface ChildHistory {
   };
 }
 
-interface ChildMatrix {
-  id: string;
-  firstName: string;
-  lastName: string;
+interface ChildMatrix extends Child {
   parentFirstName: string;
   parentLastName: string;
-  score: number;
   histories: ChildHistory;
 }
 
-
 export function ScoreAdjustments() {
-  const navigate = useNavigate();
-  const [weeks, setWeeks] = useState<Week[]>([]);
-  const [children, setChildren] = useState<ChildMatrix[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  const fetchMatrix = async () => {
-    try {
-      setLoading(true);
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  const { data, isLoading: loading, error } = useQuery({
+    queryKey: ['matrix'],
+    queryFn: async () => {
       const response = await apiClient.get('/score-adjustments/matrix');
-      setWeeks(response.data.weeks);
-      setChildren(response.data.children);
-    } catch (err) {
-      setError('Erreur lors du chargement de la matrice des rattrapages');
-    } finally {
-      setLoading(false);
+      return response.data;
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchMatrix();
-  }, []);
+  const weeks = data?.weeks || [];
+  const children = data?.children || [];
 
-  const handleToggle = async (childId: string, weekNumber: number, year: number, currentDone: number) => {
-    const newDone = currentDone > 0 ? 0 : 1;
-
-    // Optimistic UI Update
-    setChildren(prev => prev.map(child => {
-      if (child.id === childId) {
-        const key = `${year}-${weekNumber}`;
-        const newHistories = { ...child.histories };
-        newHistories[key] = { permanencesDone: newDone };
-        return { ...child, histories: newHistories };
-      }
-      return child;
-    }));
-
-    try {
-      const response = await apiClient.patch('/score-adjustments', {
-        childId,
-        weekNumber,
-        year,
-        permanencesDone: newDone
+  const toggleMutation = useMutation({
+    mutationFn: async ({ childId, weekNumber, year, newDone }: any) => {
+      return apiClient.patch('/score-adjustments', { childId, weekNumber, year, permanencesDone: newDone });
+    },
+    onMutate: async ({ childId, weekNumber, year, newDone }) => {
+      await queryClient.cancelQueries({ queryKey: ['matrix'] });
+      const previousData = queryClient.getQueryData(['matrix']);
+      
+      queryClient.setQueryData(['matrix'], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          children: old.children.map((child: any) => {
+            if (child.id === childId) {
+              const key = `${year}-${weekNumber}`;
+              return {
+                ...child,
+                histories: { ...child.histories, [key]: { permanencesDone: newDone } }
+              };
+            }
+            return child;
+          })
+        };
       });
-
-      // Update real score from server
-      setChildren(prev => prev.map(child => 
-        child.id === childId ? { ...child, score: response.data.newScore } : child
-      ));
-    } catch (err) {
-      alert("Erreur lors de l'ajustement de la permanence.");
-      fetchMatrix(); // Rollback on error
+      return { previousData };
+    },
+    onError: (_, __, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['matrix'], context.previousData);
+      }
+      showToast("Erreur lors de l'ajustement de la permanence.", 'error');
+    },
+    onSuccess: (response, { childId }) => {
+      queryClient.setQueryData(['matrix'], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          children: old.children.map((child: any) => 
+            child.id === childId ? { ...child, score: response.data.newScore } : child
+          )
+        };
+      });
     }
+  });
+
+  const handleToggle = (childId: string, weekNumber: number, year: number, currentDone: number) => {
+    const newDone = currentDone > 0 ? 0 : 1;
+    toggleMutation.mutate({ childId, weekNumber, year, newDone });
   };
 
   if (loading) {
@@ -87,7 +90,7 @@ export function ScoreAdjustments() {
   }
 
   if (error) {
-    return <div className="alert alert-error">{error}</div>;
+    return <div className="alert alert-error">Erreur lors du chargement de la matrice des rattrapages</div>;
   }
 
   return (
@@ -136,7 +139,7 @@ export function ScoreAdjustments() {
                 padding: '1.2rem', 
                 borderBottom: '2px solid var(--color-border)' 
               }}>Score Actuel</th>
-              {weeks.map(w => (
+              {weeks.map((w: Week) => (
                 <th key={w.id} style={{ textAlign: 'center', padding: '1.2rem', borderBottom: '2px solid var(--color-border)', backgroundColor: 'rgba(0,0,0,0.01)' }}>
                   <div style={{ fontWeight: 'bold', color: 'var(--color-primary)' }}>Semaine {w.weekNumber}</div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: 'normal' }}>Année {w.year}</div>
@@ -145,7 +148,7 @@ export function ScoreAdjustments() {
             </tr>
           </thead>
           <tbody>
-            {children.map((child, idx) => (
+            {children.map((child: ChildMatrix, idx: number) => (
               <tr key={child.id} style={{ backgroundColor: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.01)', transition: 'background-color 0.2s' }}>
                 <td style={{ 
                   position: 'sticky', 
@@ -175,11 +178,11 @@ export function ScoreAdjustments() {
                   padding: '1rem', 
                   borderBottom: '1px solid var(--color-border)' 
                 }}>
-                  <span className={`badge ${child.score > 0 ? 'badge-success' : child.score < 0 ? 'badge-error' : 'badge-warning'}`} style={{ fontSize: '1.1rem', padding: '0.4em 0.8em' }}>
-                    {child.score > 0 ? '+' : ''}{child.score.toFixed(1)}
+                  <span className={`badge ${(child.score ?? 0) > 0 ? 'badge-success' : (child.score ?? 0) < 0 ? 'badge-error' : 'badge-warning'}`} style={{ fontSize: '1.1rem', padding: '0.4em 0.8em' }}>
+                    {(child.score ?? 0) > 0 ? '+' : ''}{(child.score ?? 0).toFixed(1)}
                   </span>
                 </td>
-                {weeks.map(w => {
+                {weeks.map((w: Week) => {
                   const key = `${w.year}-${w.weekNumber}`;
                   const isDone = child.histories[key]?.permanencesDone > 0;
                   return (

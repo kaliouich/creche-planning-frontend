@@ -1,39 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// useNavigate removed
 import { apiClient } from '../api/client';
-import { Plus, Baby, Loader2, ArrowLeft } from 'lucide-react';
-
-interface Child {
-  id: string;
-  firstName: string;
-  lastName: string;
-  ageGroup: 'PETIT' | 'GRAND';
-  defaultPresences?: { dayOfWeek: string; halfDay: string }[];
-  parent?: {
-    id: string;
-    email: string;
-    secondEmail?: string | null;
-    firstName?: string;
-    lastName?: string;
-  };
-}
+import { Plus, Baby, Loader2 } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+import type { Child } from '../types';
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
 const DAY_LABELS: Record<string, string> = { MONDAY: 'Lun', TUESDAY: 'Mar', WEDNESDAY: 'Mer', THURSDAY: 'Jeu', FRIDAY: 'Ven' };
 const HALF_DAYS = ['MORNING', 'AFTERNOON'];
 
 export default function ChildrenManagement() {
-  const navigate = useNavigate();
-  const [children, setChildren] = useState<Child[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
   
   // Form state
   const [firstName, setFirstName] = useState('');
   const [parent1Name, setParent1Name] = useState('');
   const [parent2Name, setParent2Name] = useState('');
-  const [ageGroup, setAgeGroup] = useState<'PETIT' | 'GRAND'>('GRAND');
+  const [newChildAgeGroup, setNewChildAgeGroup] = useState<'PETIT' | 'GRAND'>('PETIT');
   const [siblingId, setSiblingId] = useState('');
   
   // Nouveaux champs pour les demi-journées d'accueil
@@ -45,23 +30,52 @@ export default function ChildrenManagement() {
   const [parent1Email, setParent1Email] = useState('');
   const [parent2Email, setParent2Email] = useState('');
 
-  const [creating, setCreating] = useState(false);
+
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await apiClient.get('/children');
-        setChildren(response.data.sort((a: Child, b: Child) => a.firstName.localeCompare(b.firstName)));
-      } catch (err) {
-        console.error("Erreur de chargement", err);
-        setError("Impossible de charger les données");
-      } finally {
-        setLoading(false);
+  const { data: children = [], isLoading: loading } = useQuery({
+    queryKey: ['children'],
+    queryFn: async () => {
+      const response = await apiClient.get('/children');
+      return response.data.sort((a: Child, b: Child) => a.firstName.localeCompare(b.firstName));
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.delete(`/children/${id}`);
+    },
+    onSuccess: (_, id) => {
+      if (editingChildId === id) {
+        handleCancelEdit();
       }
-    };
-    fetchData();
-  }, []);
+      showToast('Enfant supprimé avec succès.', 'success');
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    onError: (err: any) => {
+      showToast(err.response?.data?.error || 'Erreur lors de la suppression', 'error');
+    }
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      if (editingChildId) {
+        return apiClient.put(`/children/${editingChildId}`, payload);
+      } else {
+        return apiClient.post('/children', payload);
+      }
+    },
+    onSuccess: () => {
+      showToast(editingChildId ? 'Enfant modifié avec succès.' : 'Enfant ajouté avec succès.', 'success');
+      handleCancelEdit();
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    onError: (err: any) => {
+      showToast(err.response?.data?.error || 'Erreur lors de la sauvegarde', 'error');
+    }
+  });
 
   const togglePresence = (dayOfWeek: string, halfDay: string) => {
     setDefaultPresences(prev => {
@@ -85,7 +99,7 @@ export default function ChildrenManagement() {
     setParent1Name(p1);
     setParent2Name(p2);
     
-    setAgeGroup(child.ageGroup);
+    setNewChildAgeGroup(child.ageGroup ?? 'PETIT');
     setSiblingId(''); // Pas possible de changer la fratrie en édition facilement, on la vide
     setParent1Email(child.parent?.email || '');
     setParent2Email(child.parent?.secondEmail || '');
@@ -94,8 +108,6 @@ export default function ChildrenManagement() {
     } else {
       setDefaultPresences([]);
     }
-    setError('');
-    setSuccessMessage('');
     // Scroll to top to see form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -105,99 +117,43 @@ export default function ChildrenManagement() {
     setFirstName('');
     setParent1Name('');
     setParent2Name('');
-    setAgeGroup('GRAND');
+    setNewChildAgeGroup('GRAND');
     setSiblingId('');
     setParent1Email('');
     setParent2Email('');
     setDefaultPresences(DAYS.flatMap(day => HALF_DAYS.map(halfDay => ({ dayOfWeek: day, halfDay }))));
-    setError('');
   };
 
-  const handleDeleteChild = async (id: string) => {
+  const handleDeleteChild = (id: string) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet enfant ? Cette action est irréversible.')) {
       return;
     }
-    
-    setCreating(true);
-    setError('');
-    setSuccessMessage('');
-    
-    try {
-      await apiClient.delete(`/children/${id}`);
-      setChildren(prev => prev.filter(c => c.id !== id));
-      if (editingChildId === id) {
-        handleCancelEdit();
-      }
-      setSuccessMessage('Enfant supprimé avec succès.');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosErr = err as { response?: { data?: { error?: string } } };
-        setError(axiosErr.response?.data?.error || 'Erreur lors de la suppression');
-      } else {
-        setError('Erreur réseau');
-      }
-    } finally {
-      setCreating(false);
-    }
+    deleteMutation.mutate(id);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setCreating(true);
-    setError('');
 
-    try {
-      const formattedLastName = parent2Name ? `(${parent1Name} & ${parent2Name})` : `(${parent1Name})`;
+    const formattedLastName = parent2Name ? `(${parent1Name} & ${parent2Name})` : `(${parent1Name})`;
 
-      if (editingChildId) {
-        const response = await apiClient.put(`/children/${editingChildId}`, {
-          firstName,
-          lastName: formattedLastName,
-          parent1FirstName: parent1Name,
-          parent2FirstName: parent2Name,
-          ageGroup,
-          defaultPresences,
-          parent1Email,
-          parent2Email
-        });
-        setChildren(prev => prev.map(c => c.id === editingChildId ? response.data : c).sort((a, b) => a.firstName.localeCompare(b.firstName)));
-        handleCancelEdit();
-        setSuccessMessage('Enfant modifié avec succès.');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        let payload: any = { 
-          firstName, 
-          lastName: formattedLastName,
-          parent1FirstName: parent1Name,
-          parent2FirstName: parent2Name,
-          ageGroup,
-          defaultPresences 
-        };
+    let payload: any = {
+      firstName,
+      lastName: formattedLastName,
+      parent1FirstName: parent1Name,
+      parent2FirstName: parent2Name,
+      ageGroup: newChildAgeGroup,
+      defaultPresences,
+      parent1Email,
+      parent2Email
+    };
 
-        if (siblingId) {
-          payload.siblingId = siblingId;
-        } else {
-          payload.parent1Email = parent1Email;
-          payload.parent2Email = parent2Email;
-        }
-
-        const response = await apiClient.post('/children', payload);
-        setChildren(prev => [...prev, response.data].sort((a, b) => a.firstName.localeCompare(b.firstName)));
-        handleCancelEdit();
-        setSuccessMessage('Enfant ajouté avec succès.');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosErr = err as { response?: { data?: { error?: string } } };
-        setError(axiosErr.response?.data?.error || 'Erreur lors de la sauvegarde');
-      } else {
-        setError('Erreur réseau');
-      }
-    } finally {
-      setCreating(false);
+    if (!editingChildId && siblingId) {
+      payload.siblingId = siblingId;
+      delete payload.parent1Email;
+      delete payload.parent2Email;
     }
+
+    saveMutation.mutate(payload);
   };
 
   if (loading) {
@@ -214,32 +170,6 @@ export default function ChildrenManagement() {
         <h1>Gestion des Enfants</h1>
         <p style={{ color: 'var(--color-text-secondary)' }}>Ajoutez de nouveaux enfants et rattachez-les à leurs parents.</p>
       </div>
-
-      {error && (
-        <div style={{ 
-          backgroundColor: 'rgba(244, 63, 94, 0.1)', 
-          color: 'var(--color-secondary)', 
-          padding: '1rem', 
-          borderRadius: 'var(--radius-md)',
-          marginBottom: '1.5rem',
-          fontWeight: 500
-        }}>
-          {error}
-        </div>
-      )}
-
-      {successMessage && (
-        <div style={{ 
-          backgroundColor: 'rgba(16, 185, 129, 0.1)', 
-          color: '#10b981', 
-          padding: '1rem', 
-          borderRadius: 'var(--radius-md)',
-          marginBottom: '1.5rem',
-          fontWeight: 500
-        }}>
-          {successMessage}
-        </div>
-      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
         
@@ -287,8 +217,8 @@ export default function ChildrenManagement() {
                     type="radio" 
                     name="ageGroup" 
                     value="PETIT" 
-                    checked={ageGroup === 'PETIT'} 
-                    onChange={() => setAgeGroup('PETIT')} 
+                    checked={newChildAgeGroup === 'PETIT'} 
+                    onChange={() => setNewChildAgeGroup('PETIT')} 
                   />
                   Petits
                 </label>
@@ -297,8 +227,8 @@ export default function ChildrenManagement() {
                     type="radio" 
                     name="ageGroup" 
                     value="GRAND" 
-                    checked={ageGroup === 'GRAND'} 
-                    onChange={() => setAgeGroup('GRAND')} 
+                    checked={newChildAgeGroup === 'GRAND'} 
+                    onChange={() => setNewChildAgeGroup('GRAND')} 
                   />
                   Grands
                 </label>
@@ -312,7 +242,7 @@ export default function ChildrenManagement() {
                   <label className="form-label" style={{ fontWeight: 'normal', fontSize: '0.85rem' }}>C'est le frère/sœur de...</label>
                   <select className="form-input" value={siblingId} onChange={e => setSiblingId(e.target.value)}>
                     <option value="">-- Nouvelle famille --</option>
-                    {children.map(c => (
+                    {children.filter((c: Child) => c.id !== editingChildId).map((c: Child) => (
                       <option key={c.id} value={c.id}>
                         {c.firstName} {c.lastName}
                       </option>
@@ -387,11 +317,11 @@ export default function ChildrenManagement() {
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={creating}>
-                {creating ? <Loader2 size={18} className="spin" /> : (editingChildId ? 'Sauvegarder' : 'Ajouter')}
+              <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={saveMutation.isPending}>
+                {saveMutation.isPending ? <Loader2 size={18} className="spin" /> : (editingChildId ? 'Sauvegarder' : 'Ajouter')}
               </button>
               {editingChildId && (
-                <button type="button" className="btn btn-outline" onClick={handleCancelEdit} disabled={creating}>
+                <button type="button" className="btn btn-outline" onClick={handleCancelEdit} disabled={saveMutation.isPending}>
                   Annuler
                 </button>
               )}
@@ -409,7 +339,7 @@ export default function ChildrenManagement() {
             </p>
           ) : (
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {children.map(child => (
+              {children.map((child: Child) => (
                 <li key={child.id} style={{ 
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '1rem', border: '1px solid var(--color-glass-border)',

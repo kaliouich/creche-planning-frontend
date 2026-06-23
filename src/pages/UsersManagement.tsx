@@ -1,20 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { Users, Plus, Mail, Key, Shield, AlertTriangle } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
 
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: 'ADMIN' | 'PROFESSIONAL' | 'PARENT';
-}
+import type { UserMeta as User } from '../types';
 
 export default function UsersManagement() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
   
   // Modal state
   const [showModal, setShowModal] = useState(false);
@@ -26,26 +20,51 @@ export default function UsersManagement() {
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'ADMIN' | 'PROFESSIONAL' | 'PARENT'>('PARENT');
-  const [saving, setSaving] = useState(false);
+
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const userMetaStr = localStorage.getItem('userMeta');
   const currentUser = userMetaStr ? JSON.parse(userMetaStr) : null;
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
+  const { data: users = [], isLoading: loading } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
       const res = await apiClient.get('/users');
-      setUsers(res.data);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur lors du chargement des utilisateurs');
-    } finally {
-      setLoading(false);
+      return res.data as User[];
     }
-  };
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: any) => {
+      if (editingUser) {
+        return apiClient.put(`/users/${editingUser.id}`, data);
+      } else {
+        return apiClient.post('/users', data);
+      }
+    },
+    onSuccess: () => {
+      showToast(editingUser ? 'Utilisateur mis à jour avec succès.' : 'Utilisateur créé. Un email contenant ses accès a été envoyé.', 'success');
+      setShowModal(false);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (err: any) => {
+      showToast(err.response?.data?.error || 'Erreur lors de la sauvegarde', 'error');
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.delete(`/users/${id}`);
+    },
+    onSuccess: () => {
+      showToast('Utilisateur supprimé avec succès.', 'success');
+      setUserToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (err: any) => {
+      showToast(err.response?.data?.error || 'Erreur lors de la suppression', 'error');
+    }
+  });
 
   const openAddModal = () => {
     setEditingUser(null);
@@ -67,43 +86,14 @@ export default function UsersManagement() {
     setShowModal(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      if (editingUser) {
-        await apiClient.put(`/users/${editingUser.id}`, { email, role, password });
-        setSuccess('Utilisateur mis à jour avec succès.');
-      } else {
-        await apiClient.post('/users', { email, firstName, lastName, role, password });
-        setSuccess('Utilisateur créé. Un email contenant ses accès a été envoyé.');
-      }
-      setShowModal(false);
-      fetchUsers();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur lors de la sauvegarde');
-    } finally {
-      setSaving(false);
-    }
+    saveMutation.mutate({ email, firstName, lastName, role, password });
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!userToDelete) return;
-    setSaving(true);
-    setError('');
-    try {
-      await apiClient.delete(`/users/${userToDelete.id}`);
-      setSuccess('Utilisateur supprimé avec succès.');
-      setUserToDelete(null);
-      fetchUsers();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur lors de la suppression');
-    } finally {
-      setSaving(false);
-    }
+    deleteMutation.mutate(userToDelete.id);
   };
 
   if (loading) return <div className="flex-center" style={{ minHeight: '50vh' }}><p>Chargement...</p></div>;
@@ -116,9 +106,6 @@ export default function UsersManagement() {
           <Plus size={20} /> Nouvel Utilisateur
         </button>
       </div>
-
-      {error && <div className="alert alert-error mb-4">{error}</div>}
-      {success && <div className="alert alert-success mb-4">{success}</div>}
 
       <div className="glass-card">
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -214,8 +201,8 @@ export default function UsersManagement() {
                 <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>
                   Annuler
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+                <button type="submit" className="btn btn-primary" disabled={saveMutation.isPending}>
+                  {saveMutation.isPending ? 'Sauvegarde...' : 'Sauvegarder'}
                 </button>
               </div>
             </form>
@@ -236,8 +223,8 @@ export default function UsersManagement() {
               <button type="button" className="btn btn-outline" onClick={() => setUserToDelete(null)}>
                 Annuler
               </button>
-              <button type="button" className="btn" style={{ backgroundColor: 'var(--color-error)', color: '#ffffff', border: 'none', padding: '0.6rem 1.2rem', borderRadius: '8px', cursor: 'pointer' }} onClick={handleDelete} disabled={saving}>
-                {saving ? 'Suppression...' : 'Supprimer définitivement'}
+              <button type="button" className="btn" style={{ backgroundColor: 'var(--color-error)', color: '#ffffff', border: 'none', padding: '0.6rem 1.2rem', borderRadius: '8px', cursor: 'pointer' }} onClick={handleDelete} disabled={deleteMutation.isPending}>
+                {deleteMutation.isPending ? 'Suppression...' : 'Supprimer définitivement'}
               </button>
             </div>
           </div>

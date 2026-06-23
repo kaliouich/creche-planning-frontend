@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { apiClient } from '../api/client';
 import { LogIn } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
 
 interface LoginProps {
   onLogin: (user: { id: string; firstName: string; lastName: string; role: string }) => void;
@@ -9,13 +10,12 @@ interface LoginProps {
 export default function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState('admin@creche.fr');
   const [password, setPassword] = useState('password123');
-  const [error, setError] = useState('');
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     try {
       const response = await apiClient.post('/auth/login', { email, password });
@@ -23,9 +23,9 @@ export default function Login({ onLogin }: LoginProps) {
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
-        setError(axiosErr.response?.data?.error || 'Erreur lors de la connexion');
+        showToast(axiosErr.response?.data?.error || 'Erreur lors de la connexion', 'error');
       } else {
-        setError('Erreur réseau');
+        showToast('Erreur réseau', 'error');
       }
     } finally {
       setLoading(false);
@@ -40,20 +40,6 @@ export default function Login({ onLogin }: LoginProps) {
           <h1 style={{ marginTop: '1rem', fontSize: '1.5rem', fontWeight: 600 }}>Portail Gestion Permanences</h1>
           <p style={{ color: 'var(--color-text-secondary)', marginTop: '0.5rem' }}>Connectez-vous à Crèche Planning</p>
         </div>
-
-        {error && (
-          <div style={{ 
-            backgroundColor: 'rgba(244, 63, 94, 0.1)', 
-            color: 'var(--color-secondary)', 
-            padding: '1rem', 
-            borderRadius: 'var(--radius-md)',
-            marginBottom: '1.5rem',
-            textAlign: 'center',
-            fontWeight: 500
-          }}>
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
