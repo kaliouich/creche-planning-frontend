@@ -178,8 +178,16 @@ export function ScoreAdjustments() {
                   padding: '1rem', 
                   borderBottom: '1px solid var(--color-border)' 
                 }}>
-                  <span className={`badge ${(child.score ?? 0) > 0 ? 'badge-success' : (child.score ?? 0) < 0 ? 'badge-error' : 'badge-warning'}`} style={{ fontSize: '1.1rem', padding: '0.4em 0.8em' }}>
-                    {(child.score ?? 0) > 0 ? '+' : ''}{(child.score ?? 0).toFixed(1)}
+                  <span style={{ 
+                    fontSize: '0.9rem', 
+                    padding: '0.3em 0.8em', 
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    backgroundColor: (child.score ?? 0) >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
+                    color: (child.score ?? 0) >= 0 ? 'var(--color-success)' : 'var(--color-secondary)',
+                    border: `1px solid ${(child.score ?? 0) >= 0 ? 'var(--color-success)' : 'var(--color-secondary)'}`
+                  }}>
+                    {(child.score ?? 0) >= 0 ? `☕ Relâche (+${(child.score ?? 0).toFixed(2)})` : `🟩 Perm (${(child.score ?? 0).toFixed(2)})`}
                   </span>
                 </td>
                 {weeks.map((w: Week) => {

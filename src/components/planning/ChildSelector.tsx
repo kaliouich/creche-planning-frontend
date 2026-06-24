@@ -39,8 +39,8 @@ export function ChildSelector({ childrenList, onSelect }: ChildSelectorProps) {
               <strong style={{ fontSize: '1.2rem', zIndex: 1 }}>{child.firstName}</strong>
               <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', zIndex: 1 }}>{child.lastName}</span>
               {child.score !== undefined && (
-                <span className={`badge ${child.score > 0 ? 'badge-success' : 'badge-warning'}`} style={{ marginTop: '0.5rem', zIndex: 1 }}>
-                  {child.score > 0 ? `En relâche (${child.score.toFixed(1)})` : `Actif (${child.score.toFixed(1)})`}
+                <span className={`badge ${child.score >= 0 ? 'badge-success' : 'badge-warning'}`} style={{ marginTop: '0.5rem', zIndex: 1, backgroundColor: child.score >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)', color: child.score >= 0 ? 'var(--color-success)' : 'var(--color-secondary)', border: `1px solid ${child.score >= 0 ? 'var(--color-success)' : 'var(--color-secondary)'}` }}>
+                  {child.score >= 0 ? `☕ En relâche (${child.score.toFixed(2)})` : `🟩 En Perm (${child.score.toFixed(2)})`}
                 </span>
               )}
             </button>
