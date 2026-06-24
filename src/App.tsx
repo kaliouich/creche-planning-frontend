@@ -16,27 +16,29 @@ const Profile = lazy(() => import('./pages/Profile'));
 
 // Composant Navbar partagé
 const Navbar = ({ onLogout, user }: { onLogout: () => void, user: { firstName: string; lastName: string; role: string } }) => (
-  <nav className="navbar">
+  <nav className="navbar" aria-label="Navigation principale">
     <div className="container navbar-content">
-      <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
-          <img src="/planning/logo.png" alt="Les Fruits de la Passion" style={{ height: '40px', objectFit: 'contain' }} />
-          <span style={{ display: 'none' }}>Crèche Planning</span>
+      <div className="brand">
+        <Link to="/" className="brand-link" aria-label="Retour à l'accueil">
+          <img src="/planning/logo.png" alt="Logo Les Fruits de la Passion" className="brand-logo" />
+          <span className="sr-only">Crèche Planning</span>
         </Link>
       </div>
       
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+      <div className="navbar-actions">
         {(user.role === 'ADMIN' || user.role === 'PROFESSIONAL') && (
-          <Link to="/" className="btn btn-outline" style={{ padding: '0.4rem 1rem', border: 'none' }}>Tableau de bord</Link>
+          <Link to="/" className="btn btn-navbar" aria-label="Aller au tableau de bord">Tableau de bord</Link>
         )}
         {user.role === 'ADMIN' && (
-          <Link to="/admin/users" className="btn btn-outline" style={{ padding: '0.4rem 1rem', border: 'none' }}>Utilisateurs</Link>
+          <Link to="/admin/users" className="btn btn-navbar" aria-label="Gérer les utilisateurs">Utilisateurs</Link>
         )}
         {(user.role === 'ADMIN' || user.role === 'PROFESSIONAL') && (
-          <Link to="/profile" className="btn btn-outline" style={{ padding: '0.4rem 1rem', border: 'none' }}>Profil</Link>
+          <Link to="/profile" className="btn btn-navbar" aria-label="Voir le profil">Profil</Link>
         )}
-        <span style={{ fontWeight: 500, marginLeft: '1rem' }}>{user.firstName} {user.lastName} ({user.role})</span>
-        <button className="btn btn-outline" onClick={onLogout} style={{ padding: '0.4rem 1rem' }}>
+        <span className="navbar-user-info" aria-live="polite">
+          {user.firstName} {user.lastName} <span className="sr-only">Rôle:</span>({user.role})
+        </span>
+        <button className="btn btn-navbar" onClick={onLogout} aria-label="Se déconnecter">
           Déconnexion
         </button>
       </div>

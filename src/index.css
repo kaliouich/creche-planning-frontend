@@ -201,7 +201,64 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 0.5rem;
 }
+.brand-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  gap: 0.75rem;
+}
 
+.brand-logo {
+  height: 40px;
+  object-fit: contain;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.navbar-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.btn-navbar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-lg);
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background-color: transparent;
+  color: var(--color-text-primary);
+  border: none;
+  outline: none;
+}
+
+.btn-navbar:hover {
+  color: var(--color-primary);
+  background-color: rgba(230, 0, 126, 0.05);
+}
+
+.navbar-user-info {
+  font-weight: 500;
+  margin-left: 1rem;
+}
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
