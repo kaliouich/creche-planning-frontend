@@ -18,7 +18,10 @@ export function ChildSelector({ childrenList, onSelect }: ChildSelectorProps) {
       <div className="no-print" style={{ marginBottom: '2rem', textAlign: 'center' }}>
         <Baby size={48} color="var(--color-primary)" style={{ margin: '0 auto 1rem' }} />
         <h1>Espace Parent</h1>
-        <p style={{ color: 'var(--color-text-secondary)' }}>Veuillez sélectionner le prénom de votre enfant pour remplir le planning.</p>
+        <p style={{ color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>Veuillez sélectionner le prénom de votre enfant pour remplir le planning.</p>
+        <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', maxWidth: '600px', margin: '0 auto', backgroundColor: 'var(--color-bg-secondary)', padding: '0.8rem', borderRadius: 'var(--radius-md)' }}>
+          <strong>💡 Astuce :</strong> Le badge sous le prénom indique votre statut <strong>pour la prochaine semaine à planifier</strong>. Si vous êtes "En Perm", l'algorithme vous sollicitera très probablement. Si vous êtes "En Relâche", vous serez exempté(e) d'assignation automatique (mais vous pouvez toujours proposer votre aide !).
+        </p>
       </div>
 
       {childrenList.length === 0 ? (
