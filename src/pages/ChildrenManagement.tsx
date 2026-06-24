@@ -288,6 +288,8 @@ export default function ChildrenManagement() {
       delete payload.parent2Email;
     }
 
+    payload.appUrl = window.location.origin + '/planning';
+
     saveMutation.mutate(payload);
   };
 

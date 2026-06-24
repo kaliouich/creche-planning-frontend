@@ -16,7 +16,7 @@ export default function ForgotPassword() {
 
     setLoading(true);
     try {
-      await apiClient.post('/auth/forgot-password', { email, appUrl: window.location.origin });
+      await apiClient.post('/auth/forgot-password', { email, appUrl: window.location.origin + '/planning' });
       showToast("Si cette adresse existe, un email a été envoyé pour réinitialiser le mot de passe.", "success");
       navigate('/');
     } catch (err: any) {
