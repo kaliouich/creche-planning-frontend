@@ -425,13 +425,17 @@ export default function ChildrenManagement() {
       {absenceModalOpen && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+          backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
         }}>
-          <div style={{
-            backgroundColor: 'var(--color-surface)', padding: '2rem', borderRadius: 'var(--radius-lg)',
-            width: '90%', maxWidth: '500px', boxShadow: 'var(--shadow-xl)'
+          <div className="glass-card animate-fade-in" style={{
+            padding: '2rem', 
+            width: '90%', maxWidth: '550px',
+            backgroundColor: 'var(--color-white)', // Assure opaque background inside glass-card for readability
+            boxShadow: 'var(--shadow-xl)',
+            border: '1px solid var(--color-glass-border)'
           }}>
-            <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.25rem' }}>Déclarer un départ</h3>
+            <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.4rem', color: 'var(--color-text-primary)' }}>Déclarer une absence</h3>
             
             <div className="form-group">
               <label className="form-label">Date de départ :</label>
@@ -477,9 +481,9 @@ export default function ChildrenManagement() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem' }}>
               <button className="btn btn-outline" onClick={() => setAbsenceModalOpen(false)}>Annuler</button>
-              <button className="btn btn-primary" onClick={submitAbsence}>Valider le départ</button>
+              <button className="btn btn-primary" onClick={submitAbsence}>Valider la déclaration</button>
             </div>
           </div>
         </div>
