@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 // useNavigate removed
 import { apiClient } from '../api/client';
-import { Plus, Baby, Loader2, CalendarClock, History, Pencil, Trash2, UserPlus, UserMinus } from 'lucide-react';
+import { Plus, Baby, Loader2, CalendarClock, History, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import type { Child } from '../types';
 
@@ -483,10 +483,7 @@ export default function ChildrenManagement() {
                   <div>
                     <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
                       {child.firstName} {child.lastName}
-                      {!child.isActive && (
-                        <span style={{ fontSize: '0.75rem', backgroundColor: 'var(--color-secondary)', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>Inactif</span>
-                      )}
-                      {child.isActive && child.isCurrentlyAbsent && (
+                      {child.isCurrentlyAbsent && (
                         <span style={{ fontSize: '0.75rem', backgroundColor: 'var(--color-secondary)', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>Absent</span>
                       )}
                     </strong>
@@ -513,36 +510,11 @@ export default function ChildrenManagement() {
                       <CalendarClock size={16} style={{ marginRight: '0.3rem', display: 'inline-block', verticalAlign: 'middle' }} />
                       Gérer les absences
                     </button>
-                    {!child.isActive ? (
-                      <button className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }} onClick={async () => {
-                        try {
-                          await apiClient.put(`/children/${child.id}`, { isActive: 1 });
-                          queryClient.invalidateQueries({ queryKey: ['children'] });
-                          showToast('Enfant réactivé', 'success');
-                        } catch (err) {
-                          showToast('Erreur lors de la réactivation', 'error');
-                        }
-                      }}>
-                        <UserPlus size={16} style={{ marginRight: '0.3rem', display: 'inline-block', verticalAlign: 'middle' }} />
-                        Réactiver
-                      </button>
-                    ) : (
-                      <button className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }} onClick={async () => {
-                        if (confirm('Voulez-vous rendre cet enfant inactif ? (Il ne sera plus facturé ni compté dans les présences)')) {
-                          try {
-                            await apiClient.put(`/children/${child.id}`, { isActive: 0 });
-                            queryClient.invalidateQueries({ queryKey: ['children'] });
-                            showToast('Enfant désactivé', 'success');
-                          } catch (err) {
-                            showToast('Erreur lors de la désactivation', 'error');
-                          }
-                        }
-                      }}>
-                        <UserMinus size={16} style={{ marginRight: '0.3rem', display: 'inline-block', verticalAlign: 'middle' }} />
-                        Désactiver
-                      </button>
-                    )}
-                    <button className="btn-danger" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }} onClick={() => handleDeleteChild(child.id)}>
+                    <button 
+                      className="btn btn-outline" 
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: '#e63946', borderColor: '#e63946' }} 
+                      onClick={() => handleDeleteChild(child.id)}
+                    >
                       <Trash2 size={16} style={{ marginRight: '0.3rem', display: 'inline-block', verticalAlign: 'middle' }} />
                       Supprimer (Départ)
                     </button>
