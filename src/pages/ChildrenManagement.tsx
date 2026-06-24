@@ -205,13 +205,13 @@ export default function ChildrenManagement() {
   };
 
   const handleDeleteChild = async (childId: string) => {
-    if (confirm('Voulez-vous vraiment supprimer définitivement cet enfant ? (S\'il a un historique, cela échouera. Utilisez plutôt "Désactiver" pour un départ).')) {
+    if (confirm('Voulez-vous vraiment supprimer définitivement cet enfant ? (Ses données et son historique seront effacés)')) {
       try {
         await apiClient.delete(`/children/${childId}`);
         showToast('Enfant supprimé avec succès', 'success');
         queryClient.invalidateQueries({ queryKey: ['children'] });
       } catch (err: any) {
-        showToast(err.response?.data?.error || 'Erreur lors de la suppression. Utilisez plutôt "Désactiver".', 'error');
+        showToast(err.response?.data?.error || 'Erreur lors de la suppression.', 'error');
       }
     }
   };
@@ -485,6 +485,9 @@ export default function ChildrenManagement() {
                       {child.firstName} {child.lastName}
                       {!child.isActive && (
                         <span style={{ fontSize: '0.75rem', backgroundColor: 'var(--color-secondary)', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>Inactif</span>
+                      )}
+                      {child.isActive && child.isCurrentlyAbsent && (
+                        <span style={{ fontSize: '0.75rem', backgroundColor: 'var(--color-secondary)', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>Absent</span>
                       )}
                     </strong>
                     <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', display: 'block' }}>

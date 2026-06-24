@@ -23,6 +23,7 @@ export interface Child {
   score?: number;
   parent?: ParentInfo;
   defaultPresences?: DefaultPresence[];
+  isCurrentlyAbsent?: boolean;
 }
 
 export interface ParentInfo {
