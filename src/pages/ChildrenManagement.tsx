@@ -41,35 +41,7 @@ export default function ChildrenManagement() {
     }
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return apiClient.delete(`/children/${id}`);
-    },
-    onSuccess: (_, id) => {
-      if (editingChildId === id) {
-        handleCancelEdit();
-      }
-      showToast('Enfant supprimé avec succès.', 'success');
-      queryClient.invalidateQueries({ queryKey: ['children'] });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    },
-    onError: (err: any) => {
-      showToast(err.response?.data?.error || 'Erreur lors de la suppression', 'error');
-    }
-  });
 
-  const reintegrateMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return apiClient.put(`/children/${id}`, { isActive: true });
-    },
-    onSuccess: () => {
-      showToast('Enfant réintégré avec succès.', 'success');
-      queryClient.invalidateQueries({ queryKey: ['children'] });
-    },
-    onError: (err: any) => {
-      showToast(err.response?.data?.error || 'Erreur lors de la réintégration', 'error');
-    }
-  });
 
   const saveMutation = useMutation({
     mutationFn: async (payload: any) => {
@@ -137,18 +109,40 @@ export default function ChildrenManagement() {
     setDefaultPresences(DAYS.flatMap(day => HALF_DAYS.map(halfDay => ({ dayOfWeek: day, halfDay }))));
   };
 
-  const handleDeleteChild = (id: string) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir marquer cet enfant comme absent ? Ses statistiques seront conservées mais il n\'apparaîtra plus dans les futurs calculs.')) {
-      return;
+  // La suppression stricte est désactivée de l'UI pour éviter les erreurs, on utilise l'absence.
+
+  const handleStartAbsence = (id: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    const dateStr = window.prompt("Date de début d'absence (AAAA-MM-JJ) :", today);
+    if (dateStr === null) return;
+    
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateStr)) {
+       showToast("Format de date invalide. Utilisez AAAA-MM-JJ.", "error");
+       return;
     }
-    deleteMutation.mutate(id);
+    apiClient.post(`/children/${id}/absence/start`, { startDate: dateStr })
+      .then(() => {
+        showToast("Enfant marqué absent. Les scores ont été recalculés.", "success");
+        queryClient.invalidateQueries({ queryKey: ['children'] });
+      })
+      .catch(err => showToast(err.response?.data?.error || "Erreur", "error"));
   };
 
-  const handleReintegrateChild = (id: string) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir réintégrer cet enfant ? Il sera de nouveau inclus dans les plannings et calculs de dettes.')) {
-      return;
+  const handleEndAbsence = (id: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    const dateStr = window.prompt("Date de retour (AAAA-MM-JJ) :", today);
+    if (dateStr === null) return; 
+    
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateStr)) {
+       showToast("Format de date invalide. Utilisez AAAA-MM-JJ.", "error");
+       return;
     }
-    reintegrateMutation.mutate(id);
+    apiClient.post(`/children/${id}/absence/end`, { endDate: dateStr })
+      .then(() => {
+        showToast("Enfant réintégré. Les scores ont été recalculés.", "success");
+        queryClient.invalidateQueries({ queryKey: ['children'] });
+      })
+      .catch(err => showToast(err.response?.data?.error || "Erreur", "error"));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -391,7 +385,7 @@ export default function ChildrenManagement() {
                       <button 
                         className="btn btn-outline" 
                         style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: 'var(--color-secondary)', borderColor: 'var(--color-secondary)' }}
-                        onClick={() => handleDeleteChild(child.id)}
+                        onClick={() => handleStartAbsence(child.id)}
                       >
                         Marquer Absent
                       </button>
@@ -400,7 +394,7 @@ export default function ChildrenManagement() {
                       <button 
                         className="btn btn-primary" 
                         style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', backgroundColor: '#10b981', borderColor: '#10b981' }}
-                        onClick={() => handleReintegrateChild(child.id)}
+                        onClick={() => handleEndAbsence(child.id)}
                       >
                         Réintégrer
                       </button>
