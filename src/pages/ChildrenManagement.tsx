@@ -142,6 +142,30 @@ export default function ChildrenManagement() {
     }
   };
 
+  const calculateAbsenceDuration = (abs: any) => {
+    if (!abs.endDate) return 'Durée indéterminée';
+    const start = new Date(abs.startDate);
+    const end = new Date(abs.endDate);
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+        if (abs.startHalfDay === 'ALL') return '1 jour';
+        return '0.5 jour';
+    } else if (diffDays > 0) {
+        let days = diffDays - 1;
+        
+        if (abs.startHalfDay === 'ALL' || abs.startHalfDay === 'MORNING') days += 1;
+        else if (abs.startHalfDay === 'AFTERNOON') days += 0.5;
+        
+        if (abs.endHalfDay === 'ALL' || abs.endHalfDay === 'AFTERNOON') days += 1;
+        else if (abs.endHalfDay === 'MORNING') days += 0.5;
+        
+        return `${days} jour${days > 1 ? 's' : ''}`;
+    }
+    return '';
+  };
+
   const handleManageAbsences = (id: string) => {
     setAbsenceChildId(id);
     setAbsenceModalTab('NEW');
@@ -635,7 +659,10 @@ export default function ChildrenManagement() {
                       }}>
                         <div>
                           <strong style={{ display: 'block', color: abs.isConge ? 'var(--color-primary)' : 'var(--color-secondary)' }}>
-                            {abs.isConge ? 'Congé' : 'Absence'}
+                            {abs.isConge ? 'Congé' : 'Absence'} 
+                            <span style={{ fontSize: '0.85rem', fontWeight: 'normal', color: 'var(--color-text-secondary)', marginLeft: '0.5rem', borderLeft: '1px solid var(--color-border)', paddingLeft: '0.5rem' }}>
+                              {calculateAbsenceDuration(abs)}
+                            </span>
                           </strong>
                           <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
                             Du {new Date(abs.startDate).toLocaleDateString('fr-FR')} ({abs.startHalfDay === 'ALL' ? 'Toute la journée' : (abs.startHalfDay === 'MORNING' ? 'Matin' : 'Après-midi')})<br/>
