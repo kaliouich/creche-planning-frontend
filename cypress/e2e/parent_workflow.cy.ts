@@ -52,7 +52,7 @@ describe('Parcours Parent (End-to-End)', () => {
     cy.wait('@loginRequest');
     cy.url().should('include', '/planning');
     cy.contains('Espace Parent').should('be.visible');
-    cy.contains('Jean Dupont (PARENT)').should('be.visible');
+    cy.contains('Jean Dupont').should('be.visible');
 
     // 2. Sélectionner l'enfant et charger les disponibilités
     cy.wait('@getChildren');

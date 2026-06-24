@@ -13,6 +13,8 @@ const WeekDetails = lazy(() => import('./pages/WeekDetails'));
 const ScoreAdjustments = lazy(() => import('./pages/ScoreAdjustments').then(m => ({ default: m.ScoreAdjustments })));
 const UsersManagement = lazy(() => import('./pages/UsersManagement'));
 const Profile = lazy(() => import('./pages/Profile'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 // Composant Navbar partagé
 const Navbar = ({ onLogout, user }: { onLogout: () => void, user: { firstName: string; lastName: string; role: string } }) => (
@@ -118,6 +120,14 @@ function App() {
           </div>
         }>
           <Routes>
+            <Route 
+              path="/forgot-password" 
+              element={!user ? <ForgotPassword /> : <Navigate to="/" />} 
+            />
+            <Route 
+              path="/reset-password" 
+              element={!user ? <ResetPassword /> : <Navigate to="/" />} 
+            />
             <Route 
               path="/login" 
               element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} 

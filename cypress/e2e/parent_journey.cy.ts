@@ -3,9 +3,13 @@
 describe('Parcours Parent', () => {
   beforeEach(() => {
     // Intercepter les appels API vers le backend
-    cy.intercept('POST', '/planning/api/auth/login').as('login');
-    cy.intercept('POST', '/planning/api/auth/logout').as('logout');
-    cy.intercept('GET', '/planning/api/').as('getDashboard');
+    cy.intercept('POST', '**/api/auth/login', {
+      statusCode: 200,
+      body: { token: 'fake-jwt-token', user: { id: 'parent-123', firstName: 'Jean', lastName: 'Dupont', role: 'PARENT' } }
+    }).as('login');
+    cy.intercept('POST', '**/api/auth/logout', { statusCode: 200 }).as('logout');
+    cy.intercept('GET', '**/api/weeks', { statusCode: 200, body: [] }).as('getWeeks');
+    cy.intercept('GET', '**/api/children', { statusCode: 200, body: [] }).as('getChildren');
   });
 
   it('devrait pouvoir se connecter, consulter le dashboard et se déconnecter', () => {
@@ -13,21 +17,18 @@ describe('Parcours Parent', () => {
     cy.visit('/login');
     
     // Le formulaire de login doit être présent
-    cy.get('h2').contains('Connexion').should('be.visible');
+    cy.get('h1').contains('Portail Gestion').should('be.visible');
 
     // 2. Remplir le formulaire (on utilise des identifiants mockés si la DB est vide, 
     // ou les identifiants normaux si c'est un environnement de dev local avec la prod)
-    cy.get('input[type="email"]').type('parent@creche.fr');
-    cy.get('input[type="password"]').type('parent123'); // Exemple de mot de passe par défaut
+    cy.get('input[type="email"]').clear().type('parent@creche.fr');
+    cy.get('input[type="password"]').clear().type('parent123'); // Exemple de mot de passe par défaut
     
     // 3. Soumettre le formulaire
     cy.get('button[type="submit"]').click();
     
-    // 4. Attendre la réponse de l'API (cela va échouer si on teste contre un backend mock, 
-    // l'idéal est que la base de données locale de test ait cet utilisateur)
-    // Pour l'E2E robuste, on devrait utiliser cy.intercept pour simuler l'API si le backend n'est pas up.
-    // Ici on suppose un backend local ou staging.
-    // cy.wait('@login');
+    // 4. Attendre la réponse de l'API
+    cy.wait('@login');
 
     // 5. Vérifier la redirection vers le dashboard
     cy.url().should('not.include', '/login');

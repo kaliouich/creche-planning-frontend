@@ -18,8 +18,7 @@ export default function UsersManagement() {
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'ADMIN' | 'PROFESSIONAL' | 'PARENT'>('PARENT');
+  const [role, setRole] = useState<'ADMIN' | 'PROFESSIONAL'>('PROFESSIONAL');
 
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
@@ -71,8 +70,7 @@ export default function UsersManagement() {
     setEmail('');
     setFirstName('');
     setLastName('');
-    setPassword('');
-    setRole('PARENT');
+    setRole('PROFESSIONAL');
     setShowModal(true);
   };
 
@@ -81,14 +79,14 @@ export default function UsersManagement() {
     setEmail(user.email);
     setFirstName(user.firstName);
     setLastName(user.lastName);
-    setPassword(''); // never show password, just allow reset
-    setRole(user.role);
+    setRole(user.role as 'ADMIN' | 'PROFESSIONAL');
     setShowModal(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    saveMutation.mutate({ email, firstName, lastName, role, password });
+    const appUrl = window.location.origin + '/planning';
+    saveMutation.mutate({ email, firstName, lastName, role, appUrl });
   };
 
   const handleDelete = () => {
@@ -128,10 +126,12 @@ export default function UsersManagement() {
                   </span>
                 </td>
                 <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn btn-outline" onClick={() => openEditModal(u)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
-                    Modifier
-                  </button>
-                  {currentUser?.id !== u.id && (
+                  {u.role !== 'PARENT' && (
+                    <button className="btn btn-outline" onClick={() => openEditModal(u)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
+                      Modifier
+                    </button>
+                  )}
+                  {currentUser?.id !== u.id && u.role !== 'PARENT' && (
                     <button className="btn btn-outline" onClick={() => setUserToDelete(u)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: 'var(--color-error)', borderColor: 'var(--color-error)' }}>
                       Supprimer
                     </button>
@@ -171,31 +171,22 @@ export default function UsersManagement() {
               <div className="form-group">
                 <label className="form-label"><Shield size={16} /> Rôle</label>
                 <select className="form-control" value={role} onChange={e => setRole(e.target.value as any)} required>
-                  <option value="PARENT">Parent</option>
                   <option value="PROFESSIONAL">Pro (Professionnel)</option>
                   <option value="ADMIN">Administrateur</option>
                 </select>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginTop: '0.5rem' }}>
+                  Les comptes PARENT sont créés automatiquement via la gestion des enfants.
+                </p>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">
-                  <Key size={16} /> {editingUser ? 'Nouveau mot de passe (laisser vide pour ne pas modifier)' : 'Mot de passe initial'}
-                </label>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  value={password} 
-                  onChange={e => setPassword(e.target.value)} 
-                  required={!editingUser}
-                  placeholder={editingUser ? '*****' : 'Mot de passe temporaire'}
-                />
-                {!editingUser && (
+              {!editingUser && (
+                <div className="form-group">
                   <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginTop: '0.5rem' }}>
                     <AlertTriangle size={14} style={{ display: 'inline', verticalAlign: 'text-bottom' }} />
-                    L'utilisateur recevra ce mot de passe en clair par e-mail.
+                    L'utilisateur recevra un e-mail avec un lien pour définir son mot de passe.
                   </p>
-                )}
-              </div>
+                </div>
+              )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
                 <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>

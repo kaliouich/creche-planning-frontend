@@ -33,25 +33,25 @@ describe('Gestion des Utilisateurs (Admin)', () => {
     cy.wait('@getUsers');
   });
 
-  it('devrait afficher la liste des utilisateurs et permettre de promouvoir un parent en pro', () => {
+  it('devrait afficher la liste des utilisateurs et permettre de promouvoir un pro en admin', () => {
     // Vérifier l'affichage de la liste
     cy.contains('Jean Dupont').should('be.visible');
     cy.contains('Marie Curie').should('be.visible');
 
     // Mocker la mise à jour
-    cy.intercept('PUT', '**/api/users/user-1', {
+    cy.intercept('PUT', '**/api/users/user-2', {
       statusCode: 200,
       body: { message: 'Utilisateur mis à jour' }
     }).as('updateUser');
 
-    // Cliquer sur Modifier pour le premier utilisateur
-    cy.contains('Jean Dupont').parent().find('button').contains('Modifier').click();
+    // Cliquer sur Modifier pour le pro
+    cy.contains('Marie Curie').parent().find('button').contains('Modifier').click();
 
     // Vérifier que le modal s'ouvre
     cy.contains('Modifier l\'utilisateur').should('be.visible');
 
-    // Changer le rôle en PRO
-    cy.get('select').select('PROFESSIONAL');
+    // Changer le rôle en ADMIN
+    cy.get('select').select('ADMIN');
     
     // Sauvegarder
     cy.contains('button', 'Sauvegarder').click();
@@ -61,15 +61,15 @@ describe('Gestion des Utilisateurs (Admin)', () => {
     cy.contains('Utilisateur mis à jour avec succès.').should('be.visible');
   });
 
-  it('devrait permettre de supprimer un utilisateur de test', () => {
+  it('devrait permettre de supprimer un utilisateur pro de test', () => {
     // Mocker la suppression
-    cy.intercept('DELETE', '**/api/users/user-1', {
+    cy.intercept('DELETE', '**/api/users/user-2', {
       statusCode: 200,
       body: { message: 'Utilisateur supprimé' }
     }).as('deleteUser');
 
-    // Cliquer sur Supprimer pour Jean Dupont
-    cy.contains('Jean Dupont').parent().find('button').contains('Supprimer').click();
+    // Cliquer sur Supprimer pour Marie Curie
+    cy.contains('Marie Curie').parent().find('button').contains('Supprimer').click();
 
     // Le modal de confirmation devrait s'ouvrir
     cy.contains('Confirmer la suppression').should('be.visible');

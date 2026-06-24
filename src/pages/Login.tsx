@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { apiClient } from '../api/client';
 import { LogIn } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
+import { Link } from 'react-router-dom';
 
 interface LoginProps {
   onLogin: (user: { id: string; firstName: string; lastName: string; role: string }) => void;
@@ -64,6 +65,12 @@ export default function Login({ onLogin }: LoginProps) {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+          </div>
+          
+          <div style={{ textAlign: 'right', marginTop: '-0.5rem', marginBottom: '1rem' }}>
+            <Link to="/forgot-password" style={{ fontSize: '0.875rem', color: 'var(--color-primary)', textDecoration: 'none' }}>
+              Mot de passe oublié ?
+            </Link>
           </div>
 
           <button 

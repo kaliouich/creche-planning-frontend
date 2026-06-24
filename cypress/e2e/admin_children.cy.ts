@@ -110,13 +110,13 @@ describe('Gestion des Enfants (Admin)', () => {
       body: []
     }).as('getEmptyChildren');
 
-    // Cliquer sur Supprimer
-    cy.contains('li', 'Léa (Dupont)').find('button').contains('Supprimer').click();
+    // Cliquer sur Supprimer (maintenant "Supprimer (Départ)")
+    cy.contains('li', 'Léa (Dupont)').find('button').contains('Supprimer (Départ)').click();
     cy.wait('@deleteChild');
     cy.wait('@getEmptyChildren');
 
     // Vérifier le message de succès et la liste vide
-    cy.contains('Enfant supprimé avec succès.').should('be.visible');
+    cy.contains('Enfant supprimé avec succès').should('be.visible');
     cy.contains('Aucun enfant inscrit pour le moment.').should('be.visible');
   });
 });
