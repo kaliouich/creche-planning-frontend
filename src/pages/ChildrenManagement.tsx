@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 // useNavigate removed
 import { apiClient } from '../api/client';
-import { Plus, Baby, Loader2 } from 'lucide-react';
+import { Plus, Baby, Loader2, CalendarClock, History, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import type { Child } from '../types';
 
@@ -35,12 +35,20 @@ export default function ChildrenManagement() {
   
   // Absence Modal State
   const [absenceModalOpen, setAbsenceModalOpen] = useState(false);
+  const [absenceModalTab, setAbsenceModalTab] = useState<'NEW' | 'HISTORY'>('NEW');
   const [absenceChildId, setAbsenceChildId] = useState<string | null>(null);
+  
+  // Form State
+  const [editingAbsenceId, setEditingAbsenceId] = useState<string | null>(null);
   const [absenceDate, setAbsenceDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [startHalfDay, setStartHalfDay] = useState<'ALL' | 'MORNING' | 'AFTERNOON'>('ALL');
   const [absenceEndDate, setAbsenceEndDate] = useState<string>('');
   const [endHalfDay, setEndHalfDay] = useState<'ALL' | 'MORNING' | 'AFTERNOON'>('ALL');
   const [absenceIsConge, setAbsenceIsConge] = useState<boolean>(false);
+
+  // History State
+  const [absencesHistory, setAbsencesHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   // Reintegrate Modal State
 
@@ -122,8 +130,22 @@ export default function ChildrenManagement() {
 
   // La suppression stricte est désactivée de l'UI pour éviter les erreurs, on utilise l'absence.
 
-  const handleStartAbsence = (id: string) => {
+  const loadAbsencesHistory = async (childId: string) => {
+    setLoadingHistory(true);
+    try {
+      const res = await apiClient.get(`/children/${childId}/absences`);
+      setAbsencesHistory(res.data);
+    } catch (err) {
+      showToast("Erreur lors du chargement de l'historique", "error");
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleManageAbsences = (id: string) => {
     setAbsenceChildId(id);
+    setAbsenceModalTab('NEW');
+    setEditingAbsenceId(null);
     const today = new Date().toISOString().split('T')[0];
     setAbsenceDate(today);
     setAbsenceEndDate(today);
@@ -131,6 +153,29 @@ export default function ChildrenManagement() {
     setEndHalfDay('ALL');
     setAbsenceIsConge(false);
     setAbsenceModalOpen(true);
+    loadAbsencesHistory(id);
+  };
+
+  const handleEditAbsence = (absence: any) => {
+    setEditingAbsenceId(absence.id);
+    setAbsenceDate(absence.startDate);
+    setStartHalfDay(absence.startHalfDay);
+    setAbsenceEndDate(absence.endDate || absence.startDate);
+    setEndHalfDay(absence.endHalfDay);
+    setAbsenceIsConge(absence.isConge);
+    setAbsenceModalTab('NEW');
+  };
+
+  const handleDeleteAbsence = async (absenceId: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette absence/congé ? Le calcul des scores sera réajusté.")) return;
+    try {
+      await apiClient.delete(`/children/${absenceChildId}/absences/${absenceId}`);
+      showToast("Absence supprimée avec succès.", "success");
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+      loadAbsencesHistory(absenceChildId!);
+    } catch (err: any) {
+      showToast(err.response?.data?.error || "Erreur lors de la suppression", "error");
+    }
   };
 
   const submitAbsence = () => {
@@ -152,31 +197,27 @@ export default function ChildrenManagement() {
        return;
     }
 
-    apiClient.post(`/children/${absenceChildId}/absence/start`, { 
+    const payload = {
       startDate: absenceDate, 
       startHalfDay,
       endDate: finalEndDate,
       endHalfDay,
-      isConge: absenceIsConge 
-    })
+      isConge: absenceIsConge
+    };
+
+    const request = editingAbsenceId 
+      ? apiClient.put(`/children/${absenceChildId}/absences/${editingAbsenceId}`, payload)
+      : apiClient.post(`/children/${absenceChildId}/absences`, payload);
+
+    request
       .then(() => {
         showToast(absenceIsConge ? "Congé enregistré avec succès." : "Absence enregistrée avec succès.", "success");
         queryClient.invalidateQueries({ queryKey: ['children'] });
-        setAbsenceModalOpen(false);
+        setEditingAbsenceId(null);
+        setAbsenceModalTab('HISTORY');
+        loadAbsencesHistory(absenceChildId);
       })
       .catch((err: any) => showToast(err.response?.data?.error || "Erreur", "error"));
-  };
-
-  const handleEndAbsence = (id: string) => {
-    // We reuse the same modal to modify the active absence or end it
-    setAbsenceChildId(id);
-    const today = new Date().toISOString().split('T')[0];
-    setAbsenceDate(today); // Fallback
-    setAbsenceEndDate(today);
-    setStartHalfDay('ALL');
-    setEndHalfDay('ALL');
-    setAbsenceIsConge(false);
-    setAbsenceModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -415,24 +456,14 @@ export default function ChildrenManagement() {
                     >
                       Modifier
                     </button>
-                    {child.isActive && (
-                      <button 
-                        className="btn btn-outline" 
-                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: 'var(--color-secondary)', borderColor: 'var(--color-secondary)' }}
-                        onClick={() => handleStartAbsence(child.id)}
-                      >
-                        Marquer Absent
-                      </button>
-                    )}
-                    {!child.isActive && (
-                      <button 
-                        className="btn btn-primary" 
-                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', backgroundColor: '#10b981', borderColor: '#10b981' }}
-                        onClick={() => handleEndAbsence(child.id)}
-                      >
-                        Réintégrer
-                      </button>
-                    )}
+                    <button 
+                      className="btn btn-outline" 
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}
+                      onClick={() => handleManageAbsences(child.id)}
+                    >
+                      <CalendarClock size={16} style={{ marginRight: '0.3rem', display: 'inline-block', verticalAlign: 'middle' }} />
+                      Gérer les absences
+                    </button>
                   </div>
                 </li>
               ))}
@@ -456,109 +487,190 @@ export default function ChildrenManagement() {
             boxShadow: 'var(--shadow-xl)',
             border: '1px solid var(--color-glass-border)'
           }}>
-            <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.4rem', color: 'var(--color-text-primary)' }}>Déclarer une absence</h3>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--color-glass-border)', marginBottom: '1.5rem' }}>
+              <button 
+                onClick={() => setAbsenceModalTab('NEW')}
+                style={{
+                  flex: 1, padding: '1rem', background: 'none', border: 'none', 
+                  borderBottom: absenceModalTab === 'NEW' ? '2px solid var(--color-primary)' : '2px solid transparent',
+                  color: absenceModalTab === 'NEW' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  fontWeight: absenceModalTab === 'NEW' ? 600 : 400,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                }}
+              >
+                <Plus size={18} /> {editingAbsenceId ? 'Modifier la demande' : 'Saisir une demande'}
+              </button>
+              <button 
+                onClick={() => setAbsenceModalTab('HISTORY')}
+                style={{
+                  flex: 1, padding: '1rem', background: 'none', border: 'none', 
+                  borderBottom: absenceModalTab === 'HISTORY' ? '2px solid var(--color-primary)' : '2px solid transparent',
+                  color: absenceModalTab === 'HISTORY' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  fontWeight: absenceModalTab === 'HISTORY' ? 600 : 400,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                }}
+              >
+                <History size={18} /> Historique des demandes
+              </button>
+            </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              <div className="form-group">
-                <label className="form-label">Date de départ :</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input 
-                    type="date" 
-                    className="form-input" 
-                    value={absenceDate} 
-                    onChange={e => {
-                      setAbsenceDate(e.target.value);
-                      if (absenceEndDate < e.target.value) setAbsenceEndDate(e.target.value);
-                    }} 
-                    style={{ flex: 1 }}
-                  />
-                  <select 
-                    className="form-input" 
-                    value={startHalfDay} 
-                    onChange={e => setStartHalfDay(e.target.value as any)}
-                    style={{ width: '130px' }}
-                  >
-                    <option value="ALL">Toute la journée</option>
-                    {absenceDate === absenceEndDate ? (
-                      <>
-                        <option value="MORNING">Matin</option>
-                        <option value="AFTERNOON">Après-midi</option>
-                      </>
-                    ) : (
-                      <option value="AFTERNOON">Après-midi</option>
-                    )}
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Date de retour :</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input 
-                    type="date" 
-                    className="form-input" 
-                    value={absenceEndDate} 
-                    onChange={e => setAbsenceEndDate(e.target.value)} 
-                    style={{ flex: 1 }}
-                  />
-                  <select 
-                    className="form-input" 
-                    value={endHalfDay} 
-                    onChange={e => setEndHalfDay(e.target.value as any)}
-                    style={{ width: '130px' }}
-                  >
-                    <option value="ALL">Toute la journée</option>
-                    {absenceDate === absenceEndDate ? (
-                      <>
-                        <option value="MORNING">Matin</option>
-                        <option value="AFTERNOON">Après-midi</option>
-                      </>
-                    ) : (
-                      <option value="MORNING">Matin</option>
-                    )}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="form-group" style={{ marginTop: '1.5rem' }}>
-              <label className="form-label">Type de départ :</label>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', padding: '1rem', border: absenceIsConge ? '2px solid var(--color-primary)' : '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', backgroundColor: absenceIsConge ? 'rgba(59, 130, 246, 0.05)' : 'transparent' }}>
-                  <input 
-                    type="radio" 
-                    name="absenceType" 
-                    checked={absenceIsConge} 
-                    onChange={() => setAbsenceIsConge(true)} 
-                    style={{ marginTop: '0.25rem' }}
-                  />
-                  <div>
-                    <strong style={{ display: 'block', color: 'var(--color-primary)' }}>Congé (Validé RH)</strong>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>L'enfant est hors effectif. La famille ne paie pas de dette de permanence pour cette période.</span>
+            {absenceModalTab === 'NEW' ? (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Date de départ :</label>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <input 
+                        type="date" 
+                        className="form-input" 
+                        value={absenceDate} 
+                        onChange={e => {
+                          setAbsenceDate(e.target.value);
+                          if (absenceEndDate < e.target.value) setAbsenceEndDate(e.target.value);
+                        }} 
+                        style={{ flex: '1 1 200px' }}
+                      />
+                      <select 
+                        className="form-input" 
+                        value={startHalfDay} 
+                        onChange={e => setStartHalfDay(e.target.value as any)}
+                        style={{ flex: '1 1 150px' }}
+                      >
+                        <option value="ALL">Toute la journée</option>
+                        {absenceDate === absenceEndDate ? (
+                          <>
+                            <option value="MORNING">Matin</option>
+                            <option value="AFTERNOON">Après-midi</option>
+                          </>
+                        ) : (
+                          <option value="AFTERNOON">Après-midi</option>
+                        )}
+                      </select>
+                    </div>
                   </div>
-                </label>
 
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', padding: '1rem', border: !absenceIsConge ? '2px solid var(--color-secondary)' : '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', backgroundColor: !absenceIsConge ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}>
-                  <input 
-                    type="radio" 
-                    name="absenceType" 
-                    checked={!absenceIsConge} 
-                    onChange={() => setAbsenceIsConge(false)} 
-                    style={{ marginTop: '0.25rem' }}
-                  />
-                  <div>
-                    <strong style={{ display: 'block', color: 'var(--color-secondary)' }}>Absence Classique</strong>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>La place est conservée. La famille continue d'accumuler sa dette de permanence normale.</span>
+                  <div className="form-group">
+                    <label className="form-label">Date de retour :</label>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <input 
+                        type="date" 
+                        className="form-input" 
+                        value={absenceEndDate} 
+                        onChange={e => setAbsenceEndDate(e.target.value)} 
+                        style={{ flex: '1 1 200px' }}
+                      />
+                      <select 
+                        className="form-input" 
+                        value={endHalfDay} 
+                        onChange={e => setEndHalfDay(e.target.value as any)}
+                        style={{ flex: '1 1 150px' }}
+                      >
+                        <option value="ALL">Toute la journée</option>
+                        {absenceDate === absenceEndDate ? (
+                          <>
+                            <option value="MORNING">Matin</option>
+                            <option value="AFTERNOON">Après-midi</option>
+                          </>
+                        ) : (
+                          <option value="MORNING">Matin</option>
+                        )}
+                      </select>
+                    </div>
                   </div>
-                </label>
-              </div>
-            </div>
+                </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem' }}>
-              <button className="btn btn-outline" onClick={() => setAbsenceModalOpen(false)}>Annuler</button>
-              <button className="btn btn-primary" onClick={submitAbsence}>Valider la déclaration</button>
-            </div>
+                <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                  <label className="form-label">Type de départ :</label>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', padding: '1rem', border: absenceIsConge ? '2px solid var(--color-primary)' : '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', backgroundColor: absenceIsConge ? 'rgba(59, 130, 246, 0.05)' : 'transparent' }}>
+                      <input 
+                        type="radio" 
+                        name="absenceType" 
+                        checked={absenceIsConge} 
+                        onChange={() => setAbsenceIsConge(true)} 
+                        style={{ marginTop: '0.25rem' }}
+                      />
+                      <div>
+                        <strong style={{ display: 'block', color: 'var(--color-primary)' }}>Congé (Validé RH)</strong>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>L'enfant est hors effectif. La famille ne paie pas de dette de permanence pour cette période.</span>
+                      </div>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', padding: '1rem', border: !absenceIsConge ? '2px solid var(--color-secondary)' : '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', backgroundColor: !absenceIsConge ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}>
+                      <input 
+                        type="radio" 
+                        name="absenceType" 
+                        checked={!absenceIsConge} 
+                        onChange={() => setAbsenceIsConge(false)} 
+                        style={{ marginTop: '0.25rem' }}
+                      />
+                      <div>
+                        <strong style={{ display: 'block', color: 'var(--color-secondary)' }}>Absence Classique</strong>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>La place est conservée. La famille continue d'accumuler sa dette de permanence normale.</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem' }}>
+                  <button className="btn btn-outline" onClick={() => { setAbsenceModalOpen(false); setEditingAbsenceId(null); }}>Annuler</button>
+                  <button className="btn btn-primary" onClick={submitAbsence}>{editingAbsenceId ? 'Mettre à jour' : 'Valider la déclaration'}</button>
+                </div>
+              </>
+            ) : (
+              <>
+                {loadingHistory ? (
+                  <div className="flex-center" style={{ padding: '2rem' }}>
+                    <Loader2 size={24} className="spin" style={{ color: 'var(--color-primary)' }} />
+                  </div>
+                ) : absencesHistory.length === 0 ? (
+                  <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center', padding: '2rem' }}>
+                    Aucun historique d'absence pour cet enfant.
+                  </p>
+                ) : (
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '400px', overflowY: 'auto' }}>
+                    {absencesHistory.map((abs: any) => (
+                      <li key={abs.id} style={{ 
+                        padding: '1rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        backgroundColor: 'var(--color-bg-secondary)'
+                      }}>
+                        <div>
+                          <strong style={{ display: 'block', color: abs.isConge ? 'var(--color-primary)' : 'var(--color-secondary)' }}>
+                            {abs.isConge ? 'Congé' : 'Absence'}
+                          </strong>
+                          <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+                            Du {new Date(abs.startDate).toLocaleDateString('fr-FR')} ({abs.startHalfDay === 'ALL' ? 'Toute la journée' : (abs.startHalfDay === 'MORNING' ? 'Matin' : 'Après-midi')})<br/>
+                            Au {abs.endDate ? new Date(abs.endDate).toLocaleDateString('fr-FR') : 'Non défini'} ({abs.endHalfDay === 'ALL' ? 'Toute la journée' : (abs.endHalfDay === 'MORNING' ? 'Matin' : 'Après-midi')})
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button 
+                            title="Modifier"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
+                            onClick={() => handleEditAbsence(abs)}
+                          >
+                            <Pencil size={18} />
+                          </button>
+                          <button 
+                            title="Supprimer"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-secondary)' }}
+                            onClick={() => handleDeleteAbsence(abs.id)}
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem' }}>
+                  <button className="btn btn-outline" onClick={() => setAbsenceModalOpen(false)}>Fermer</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
