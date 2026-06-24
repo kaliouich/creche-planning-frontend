@@ -37,6 +37,9 @@ export default function ChildrenManagement() {
   const [absenceModalOpen, setAbsenceModalOpen] = useState(false);
   const [absenceChildId, setAbsenceChildId] = useState<string | null>(null);
   const [absenceDate, setAbsenceDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [startHalfDay, setStartHalfDay] = useState<'ALL' | 'MORNING' | 'AFTERNOON'>('ALL');
+  const [absenceEndDate, setAbsenceEndDate] = useState<string>('');
+  const [endHalfDay, setEndHalfDay] = useState<'ALL' | 'MORNING' | 'AFTERNOON'>('ALL');
   const [absenceIsConge, setAbsenceIsConge] = useState<boolean>(false);
 
   // Reintegrate Modal State
@@ -121,7 +124,11 @@ export default function ChildrenManagement() {
 
   const handleStartAbsence = (id: string) => {
     setAbsenceChildId(id);
-    setAbsenceDate(new Date().toISOString().split('T')[0]);
+    const today = new Date().toISOString().split('T')[0];
+    setAbsenceDate(today);
+    setAbsenceEndDate(today);
+    setStartHalfDay('ALL');
+    setEndHalfDay('ALL');
     setAbsenceIsConge(false);
     setAbsenceModalOpen(true);
   };
@@ -129,33 +136,47 @@ export default function ChildrenManagement() {
   const submitAbsence = () => {
     if (!absenceChildId) return;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(absenceDate)) {
-       showToast("Format de date invalide. Utilisez AAAA-MM-JJ.", "error");
+       showToast("Format de date de départ invalide. Utilisez AAAA-MM-JJ.", "error");
        return;
     }
-    apiClient.post(`/children/${absenceChildId}/absence/start`, { startDate: absenceDate, isConge: absenceIsConge })
+    
+    let finalEndDate = absenceEndDate;
+    if (!finalEndDate) finalEndDate = absenceDate;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(finalEndDate)) {
+       showToast("Format de date de fin invalide. Utilisez AAAA-MM-JJ.", "error");
+       return;
+    }
+
+    if (finalEndDate < absenceDate) {
+       showToast("La date de retour ne peut pas être avant la date de départ.", "error");
+       return;
+    }
+
+    apiClient.post(`/children/${absenceChildId}/absence/start`, { 
+      startDate: absenceDate, 
+      startHalfDay,
+      endDate: finalEndDate,
+      endHalfDay,
+      isConge: absenceIsConge 
+    })
       .then(() => {
         showToast(absenceIsConge ? "Congé enregistré avec succès." : "Absence enregistrée avec succès.", "success");
         queryClient.invalidateQueries({ queryKey: ['children'] });
         setAbsenceModalOpen(false);
       })
-      .catch(err => showToast(err.response?.data?.error || "Erreur", "error"));
+      .catch((err: any) => showToast(err.response?.data?.error || "Erreur", "error"));
   };
 
   const handleEndAbsence = (id: string) => {
+    // We reuse the same modal to modify the active absence or end it
+    setAbsenceChildId(id);
     const today = new Date().toISOString().split('T')[0];
-    const dateStr = window.prompt("Date de retour (AAAA-MM-JJ) :", today);
-    if (dateStr === null) return; 
-    
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateStr)) {
-       showToast("Format de date invalide. Utilisez AAAA-MM-JJ.", "error");
-       return;
-    }
-    apiClient.post(`/children/${id}/absence/end`, { endDate: dateStr })
-      .then(() => {
-        showToast("Enfant réintégré. Les scores ont été recalculés.", "success");
-        queryClient.invalidateQueries({ queryKey: ['children'] });
-      })
-      .catch(err => showToast(err.response?.data?.error || "Erreur", "error"));
+    setAbsenceDate(today); // Fallback
+    setAbsenceEndDate(today);
+    setStartHalfDay('ALL');
+    setEndHalfDay('ALL');
+    setAbsenceIsConge(false);
+    setAbsenceModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -437,14 +458,67 @@ export default function ChildrenManagement() {
           }}>
             <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.4rem', color: 'var(--color-text-primary)' }}>Déclarer une absence</h3>
             
-            <div className="form-group">
-              <label className="form-label">Date de départ :</label>
-              <input 
-                type="date" 
-                className="form-input" 
-                value={absenceDate} 
-                onChange={e => setAbsenceDate(e.target.value)} 
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <div className="form-group">
+                <label className="form-label">Date de départ :</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input 
+                    type="date" 
+                    className="form-input" 
+                    value={absenceDate} 
+                    onChange={e => {
+                      setAbsenceDate(e.target.value);
+                      if (absenceEndDate < e.target.value) setAbsenceEndDate(e.target.value);
+                    }} 
+                    style={{ flex: 1 }}
+                  />
+                  <select 
+                    className="form-input" 
+                    value={startHalfDay} 
+                    onChange={e => setStartHalfDay(e.target.value as any)}
+                    style={{ width: '130px' }}
+                  >
+                    <option value="ALL">Toute la journée</option>
+                    {absenceDate === absenceEndDate ? (
+                      <>
+                        <option value="MORNING">Matin</option>
+                        <option value="AFTERNOON">Après-midi</option>
+                      </>
+                    ) : (
+                      <option value="AFTERNOON">Après-midi</option>
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Date de retour :</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input 
+                    type="date" 
+                    className="form-input" 
+                    value={absenceEndDate} 
+                    onChange={e => setAbsenceEndDate(e.target.value)} 
+                    style={{ flex: 1 }}
+                  />
+                  <select 
+                    className="form-input" 
+                    value={endHalfDay} 
+                    onChange={e => setEndHalfDay(e.target.value as any)}
+                    style={{ width: '130px' }}
+                  >
+                    <option value="ALL">Toute la journée</option>
+                    {absenceDate === absenceEndDate ? (
+                      <>
+                        <option value="MORNING">Matin</option>
+                        <option value="AFTERNOON">Après-midi</option>
+                      </>
+                    ) : (
+                      <option value="MORNING">Matin</option>
+                    )}
+                  </select>
+                </div>
+              </div>
             </div>
 
             <div className="form-group" style={{ marginTop: '1.5rem' }}>
