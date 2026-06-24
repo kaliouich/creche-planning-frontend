@@ -1,5 +1,7 @@
-import { Calendar, Loader2, Save, ArrowLeft } from 'lucide-react';
+import { Calendar, Loader2, Save, ArrowLeft, History } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { getWeekDateRange, getDateForDayOfWeek } from '../../utils/date';
+import { apiClient } from '../../api/client';
 
 import type { Child, Week, SlotStatus } from '../../types';
 
@@ -40,6 +42,15 @@ export function AvailabilityForm({
   HALF_DAYS,
   HALF_DAY_LABELS
 }: AvailabilityFormProps) {
+
+  const { data: scoreHistory, isLoading: loadingHistory } = useQuery({
+    queryKey: ['score-history', selectedChild.id],
+    queryFn: async () => {
+      const res = await apiClient.get(`/children/${selectedChild.id}/history`);
+      return res.data;
+    }
+  });
+
   return (
     <div className="animate-fade-in no-print">
       <button className="btn btn-outline" style={{ marginBottom: '2rem' }} onClick={onDeselectChild}>
@@ -277,6 +288,57 @@ export function AvailabilityForm({
           </div>
         </div>
       )}
+
+      {/* Historique des permanences du parent */}
+      <div className="glass-card no-print" style={{ marginTop: '2rem' }}>
+        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <History size={20} /> Historique de vos permanences
+        </h3>
+        
+        {loadingHistory ? (
+          <div className="flex-center" style={{ padding: '2rem' }}><Loader2 size={24} className="spin" style={{ color: 'var(--color-primary)' }} /></div>
+        ) : !scoreHistory || scoreHistory.length === 0 ? (
+          <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>Aucun historique de score disponible.</p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.9rem' }}>
+              <thead>
+                <tr>
+                  <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)', textAlign: 'left' }}>Semaine</th>
+                  <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)' }}>Statut (P/R)</th>
+                  <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)' }}>Dette</th>
+                  <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)', textAlign: 'right' }}>Score Cumulé</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scoreHistory.map((h: any, idx: number) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '0.75rem', textAlign: 'left', fontWeight: 500 }}>
+                      Semaine {h.weekNumber} <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>({h.year})</span>
+                    </td>
+                    <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>
+                      {h.permanencesDone > 0 ? (
+                        <span style={{ color: 'var(--color-primary)' }}>P ({h.permanencesDone})</span>
+                      ) : (
+                        <span style={{ color: 'var(--color-success)' }}>R (Relâche)</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '0.75rem', color: 'var(--color-secondary)' }}>
+                      -{h.permanencesDue.toFixed(2)}
+                    </td>
+                    <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                      <span className={`badge ${h.scoreAfter > 0 ? 'badge-success' : h.scoreAfter < 0 ? 'badge-error' : 'badge-warning'}`}>
+                        {h.scoreAfter > 0 ? '+' : ''}{h.scoreAfter.toFixed(2)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
