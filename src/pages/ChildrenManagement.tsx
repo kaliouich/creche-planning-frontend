@@ -125,7 +125,7 @@ export default function ChildrenManagement() {
   };
 
   const handleDeleteChild = (id: string) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet enfant ? Cette action est irréversible.')) {
+    if (!window.confirm('Êtes-vous sûr de vouloir marquer cet enfant comme absent ? Ses statistiques seront conservées mais il n\'apparaîtra plus dans les futurs calculs.')) {
       return;
     }
     deleteMutation.mutate(id);
@@ -346,7 +346,12 @@ export default function ChildrenManagement() {
                   borderRadius: 'var(--radius-md)'
                 }}>
                   <div>
-                    <strong style={{ display: 'block', fontSize: '1.1rem' }}>{child.firstName} {child.lastName}</strong>
+                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+                      {child.firstName} {child.lastName}
+                      {!child.isActive && (
+                        <span style={{ fontSize: '0.75rem', backgroundColor: 'var(--color-secondary)', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>Absent</span>
+                      )}
+                    </strong>
                     <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', display: 'block' }}>
                       Section : {child.ageGroup === 'PETIT' ? 'Petits' : 'Grands'}
                     </span>
@@ -362,13 +367,15 @@ export default function ChildrenManagement() {
                     >
                       Modifier
                     </button>
-                    <button 
-                      className="btn btn-outline" 
-                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: 'var(--color-secondary)', borderColor: 'var(--color-secondary)' }}
-                      onClick={() => handleDeleteChild(child.id)}
-                    >
-                      Supprimer
-                    </button>
+                    {child.isActive && (
+                      <button 
+                        className="btn btn-outline" 
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: 'var(--color-secondary)', borderColor: 'var(--color-secondary)' }}
+                        onClick={() => handleDeleteChild(child.id)}
+                      >
+                        Marquer Absent
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}
