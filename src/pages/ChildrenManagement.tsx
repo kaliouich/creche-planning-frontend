@@ -58,6 +58,19 @@ export default function ChildrenManagement() {
     }
   });
 
+  const reintegrateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient.put(`/children/${id}`, { isActive: true });
+    },
+    onSuccess: () => {
+      showToast('Enfant réintégré avec succès.', 'success');
+      queryClient.invalidateQueries({ queryKey: ['children'] });
+    },
+    onError: (err: any) => {
+      showToast(err.response?.data?.error || 'Erreur lors de la réintégration', 'error');
+    }
+  });
+
   const saveMutation = useMutation({
     mutationFn: async (payload: any) => {
       if (editingChildId) {
@@ -129,6 +142,13 @@ export default function ChildrenManagement() {
       return;
     }
     deleteMutation.mutate(id);
+  };
+
+  const handleReintegrateChild = (id: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir réintégrer cet enfant ? Il sera de nouveau inclus dans les plannings et calculs de dettes.')) {
+      return;
+    }
+    reintegrateMutation.mutate(id);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -374,6 +394,15 @@ export default function ChildrenManagement() {
                         onClick={() => handleDeleteChild(child.id)}
                       >
                         Marquer Absent
+                      </button>
+                    )}
+                    {!child.isActive && (
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', backgroundColor: '#10b981', borderColor: '#10b981' }}
+                        onClick={() => handleReintegrateChild(child.id)}
+                      >
+                        Réintégrer
                       </button>
                     )}
                   </div>
