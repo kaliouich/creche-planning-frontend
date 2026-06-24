@@ -197,11 +197,19 @@ export default function ChildrenManagement() {
        return;
     }
 
+    let payloadStartHalfDay = startHalfDay;
+    let payloadEndHalfDay = endHalfDay;
+
+    if (absenceDate === finalEndDate) {
+      payloadStartHalfDay = startHalfDay;
+      payloadEndHalfDay = startHalfDay;
+    }
+
     const payload = {
       startDate: absenceDate, 
-      startHalfDay,
+      startHalfDay: payloadStartHalfDay,
       endDate: finalEndDate,
-      endHalfDay,
+      endHalfDay: payloadEndHalfDay,
       isConge: absenceIsConge
     };
 
@@ -537,14 +545,8 @@ export default function ChildrenManagement() {
                         style={{ flex: '1 1 150px' }}
                       >
                         <option value="ALL">Toute la journée</option>
-                        {absenceDate === absenceEndDate ? (
-                          <>
-                            <option value="MORNING">Matin</option>
-                            <option value="AFTERNOON">Après-midi</option>
-                          </>
-                        ) : (
-                          <option value="AFTERNOON">Après-midi</option>
-                        )}
+                        <option value="MORNING">Matin</option>
+                        <option value="AFTERNOON">Après-midi</option>
                       </select>
                     </div>
                   </div>
@@ -561,19 +563,14 @@ export default function ChildrenManagement() {
                       />
                       <select 
                         className="form-input" 
-                        value={endHalfDay} 
+                        value={absenceDate === absenceEndDate ? startHalfDay : endHalfDay} 
                         onChange={e => setEndHalfDay(e.target.value as any)}
-                        style={{ flex: '1 1 150px' }}
+                        style={{ flex: '1 1 150px', opacity: absenceDate === absenceEndDate ? 0.6 : 1 }}
+                        disabled={absenceDate === absenceEndDate}
                       >
                         <option value="ALL">Toute la journée</option>
-                        {absenceDate === absenceEndDate ? (
-                          <>
-                            <option value="MORNING">Matin</option>
-                            <option value="AFTERNOON">Après-midi</option>
-                          </>
-                        ) : (
-                          <option value="MORNING">Matin</option>
-                        )}
+                        <option value="MORNING">Matin</option>
+                        <option value="AFTERNOON">Après-midi</option>
                       </select>
                     </div>
                   </div>
