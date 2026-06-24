@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { Users, Plus, Mail, Key, Shield, AlertTriangle } from 'lucide-react';
+import { Users, Plus, Mail, Shield, AlertTriangle } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 
 import type { UserMeta as User } from '../types';
