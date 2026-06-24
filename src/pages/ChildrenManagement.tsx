@@ -32,6 +32,14 @@ export default function ChildrenManagement() {
 
 
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
+  
+  // Absence Modal State
+  const [absenceModalOpen, setAbsenceModalOpen] = useState(false);
+  const [absenceChildId, setAbsenceChildId] = useState<string | null>(null);
+  const [absenceDate, setAbsenceDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [absenceIsConge, setAbsenceIsConge] = useState<boolean>(false);
+
+  // Reintegrate Modal State
 
   const { data: children = [], isLoading: loading } = useQuery({
     queryKey: ['children'],
@@ -112,18 +120,23 @@ export default function ChildrenManagement() {
   // La suppression stricte est désactivée de l'UI pour éviter les erreurs, on utilise l'absence.
 
   const handleStartAbsence = (id: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    const dateStr = window.prompt("Date de début d'absence (AAAA-MM-JJ) :", today);
-    if (dateStr === null) return;
-    
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateStr)) {
+    setAbsenceChildId(id);
+    setAbsenceDate(new Date().toISOString().split('T')[0]);
+    setAbsenceIsConge(false);
+    setAbsenceModalOpen(true);
+  };
+
+  const submitAbsence = () => {
+    if (!absenceChildId) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(absenceDate)) {
        showToast("Format de date invalide. Utilisez AAAA-MM-JJ.", "error");
        return;
     }
-    apiClient.post(`/children/${id}/absence/start`, { startDate: dateStr })
+    apiClient.post(`/children/${absenceChildId}/absence/start`, { startDate: absenceDate, isConge: absenceIsConge })
       .then(() => {
-        showToast("Enfant marqué absent. Les scores ont été recalculés.", "success");
+        showToast(absenceIsConge ? "Congé enregistré avec succès." : "Absence enregistrée avec succès.", "success");
         queryClient.invalidateQueries({ queryKey: ['children'] });
+        setAbsenceModalOpen(false);
       })
       .catch(err => showToast(err.response?.data?.error || "Erreur", "error"));
   };
@@ -407,6 +420,71 @@ export default function ChildrenManagement() {
         </div>
 
       </div>
+
+      {/* MODAL ABSENCE / CONGÉ */}
+      {absenceModalOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'var(--color-surface)', padding: '2rem', borderRadius: 'var(--radius-lg)',
+            width: '90%', maxWidth: '500px', boxShadow: 'var(--shadow-xl)'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.25rem' }}>Déclarer un départ</h3>
+            
+            <div className="form-group">
+              <label className="form-label">Date de départ :</label>
+              <input 
+                type="date" 
+                className="form-input" 
+                value={absenceDate} 
+                onChange={e => setAbsenceDate(e.target.value)} 
+              />
+            </div>
+
+            <div className="form-group" style={{ marginTop: '1.5rem' }}>
+              <label className="form-label">Type de départ :</label>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', padding: '1rem', border: absenceIsConge ? '2px solid var(--color-primary)' : '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', backgroundColor: absenceIsConge ? 'rgba(59, 130, 246, 0.05)' : 'transparent' }}>
+                  <input 
+                    type="radio" 
+                    name="absenceType" 
+                    checked={absenceIsConge} 
+                    onChange={() => setAbsenceIsConge(true)} 
+                    style={{ marginTop: '0.25rem' }}
+                  />
+                  <div>
+                    <strong style={{ display: 'block', color: 'var(--color-primary)' }}>Congé (Validé RH)</strong>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>L'enfant est hors effectif. La famille ne paie pas de dette de permanence pour cette période.</span>
+                  </div>
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', padding: '1rem', border: !absenceIsConge ? '2px solid var(--color-secondary)' : '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', backgroundColor: !absenceIsConge ? 'rgba(239, 68, 68, 0.05)' : 'transparent' }}>
+                  <input 
+                    type="radio" 
+                    name="absenceType" 
+                    checked={!absenceIsConge} 
+                    onChange={() => setAbsenceIsConge(false)} 
+                    style={{ marginTop: '0.25rem' }}
+                  />
+                  <div>
+                    <strong style={{ display: 'block', color: 'var(--color-secondary)' }}>Absence Classique</strong>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>La place est conservée. La famille continue d'accumuler sa dette de permanence normale.</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
+              <button className="btn btn-outline" onClick={() => setAbsenceModalOpen(false)}>Annuler</button>
+              <button className="btn btn-primary" onClick={submitAbsence}>Valider le départ</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
