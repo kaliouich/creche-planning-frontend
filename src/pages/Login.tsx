@@ -9,8 +9,8 @@ interface LoginProps {
 }
 
 export default function Login({ onLogin }: LoginProps) {
-  const [email, setEmail] = useState('admin@creche.fr');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
 
