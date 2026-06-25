@@ -61,7 +61,7 @@ export interface Slot {
   planningWeekId?: string;
   dayOfWeek: string;
   halfDay: string;
-  slotType: 'OPEN' | 'DOUBLE_PERM' | 'CLOSED';
+  slotType: 'OPEN' | 'DOUBLE_PERM' | 'CLOSED' | 'NO_PERM';
   requiredParents: number;
   assignments?: Assignment[];
   availabilities?: Availability[];

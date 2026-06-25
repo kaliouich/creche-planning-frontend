@@ -115,7 +115,7 @@ export function AvailabilityForm({
                     const slot = (openWeek.slots || []).find(s => s.dayOfWeek === day && s.halfDay === halfDay);
                     if (!slot) return <div key={halfDay}>-</div>;
 
-                    const isClosed = slot.slotType === 'CLOSED';
+                    const isClosed = slot.slotType === 'CLOSED' || slot.slotType === 'NO_PERM';
                     const isEnrolled = selectedChild.defaultPresences?.some(dp => dp.dayOfWeek === day && dp.halfDay === halfDay) ?? true;
                     const status = availabilities[slot.id];
 
@@ -124,7 +124,7 @@ export function AvailabilityForm({
                         <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>{HALF_DAY_LABELS[halfDay]}</span>
                         {isClosed ? (
                           <div style={{ padding: '0.5rem', textAlign: 'center', backgroundColor: 'var(--color-glass-border)', borderRadius: 'var(--radius-md)', opacity: 0.5, fontSize: '0.9rem' }}>
-                            Fermé
+                            {slot.slotType === 'NO_PERM' ? 'Pas de perm' : 'Fermé'}
                           </div>
                         ) : !isEnrolled ? (
                           <div style={{ padding: '0.5rem', textAlign: 'center', backgroundColor: 'var(--color-glass-border)', borderRadius: 'var(--radius-md)', opacity: 0.7, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>

@@ -57,10 +57,11 @@ export default function WeekDetails() {
   const handleToggleSlotType = async (slot: Slot) => {
     if (!week || week.status !== 'PREPARATION') return;
 
-    // Cycle: OPEN -> DOUBLE_PERM -> CLOSED -> OPEN
+    // Cycle: OPEN -> DOUBLE_PERM -> NO_PERM -> CLOSED -> OPEN
     let nextType = 'OPEN';
     if (slot.slotType === 'OPEN') nextType = 'DOUBLE_PERM';
-    else if (slot.slotType === 'DOUBLE_PERM') nextType = 'CLOSED';
+    else if (slot.slotType === 'DOUBLE_PERM') nextType = 'NO_PERM';
+    else if (slot.slotType === 'NO_PERM') nextType = 'CLOSED';
 
     try {
       const response = await apiClient.patch(`/slots/${slot.id}`, { slotType: nextType });

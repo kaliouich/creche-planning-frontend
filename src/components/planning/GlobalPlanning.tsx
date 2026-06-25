@@ -53,7 +53,7 @@ export function GlobalPlanning({
     if (!globalPlanning || globalPlanning.status !== 'PUBLISHED') return stats;
 
     (globalPlanning.slots || []).forEach(slot => {
-      const isClosed = slot.slotType === 'CLOSED';
+      const isClosed = slot.slotType === 'CLOSED' || slot.slotType === 'NO_PERM';
       if (isClosed) return;
 
       const declaredAbsents = (slot.childPresences || [])
@@ -150,6 +150,7 @@ export function GlobalPlanning({
               if (!slot) return <div key={halfDay}>-</div>;
 
               const isClosed = slot.slotType === 'CLOSED';
+              const isNoPerm = slot.slotType === 'NO_PERM';
               const isDouble = slot.slotType === 'DOUBLE_PERM';
               const slotStat = slotStats[slot.id];
 
@@ -158,19 +159,20 @@ export function GlobalPlanning({
                   <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>{HALF_DAY_LABELS[halfDay]}</span>
                   
                   <div 
-                    className={`btn ${isClosed ? 'btn-outline' : globalPlanning.status === 'PUBLISHED' ? 'btn-primary' : 'btn-outline'}`}
+                    className={`btn ${(isClosed || isNoPerm) ? 'btn-outline' : globalPlanning.status === 'PUBLISHED' ? 'btn-primary' : 'btn-outline'}`}
                     style={{ 
                       justifyContent: 'center',
-                      borderColor: isClosed ? 'var(--color-secondary)' : undefined,
-                      color: isClosed ? 'var(--color-secondary)' : undefined,
+                      borderColor: (isClosed || isNoPerm) ? 'var(--color-secondary)' : undefined,
+                      color: (isClosed || isNoPerm) ? 'var(--color-secondary)' : undefined,
                       cursor: 'default',
-                      fontWeight: globalPlanning.status === 'PUBLISHED' && !isClosed && slot.assignments?.length ? 600 : undefined,
+                      fontWeight: globalPlanning.status === 'PUBLISHED' && !(isClosed || isNoPerm) && slot.assignments?.length ? 600 : undefined,
                       padding: '0.5rem',
                       height: 'auto'
                     }}
                   >
                     {isClosed && 'Fermé'}
-                    {!isClosed && globalPlanning.status === 'PUBLISHED' && (
+                    {isNoPerm && 'Pas de perm'}
+                    {!(isClosed || isNoPerm) && globalPlanning.status === 'PUBLISHED' && (
                       <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                         {slot.assignments && slot.assignments.length > 0 
                           ? slot.assignments.map((a: any, index: number) => {

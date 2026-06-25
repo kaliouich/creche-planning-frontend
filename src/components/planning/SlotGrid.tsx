@@ -67,7 +67,8 @@ export function SlotGrid({ week, children, isEditable, onToggleSlotType }: SlotG
             const slot = week.slots?.find(s => s.dayOfWeek === day && s.halfDay === halfDay);
             if (!slot) return <div key={halfDay}>-</div>;
 
-            const isClosed = slot.slotType === 'CLOSED';
+            const isClosed = slot.slotType === 'CLOSED' || slot.slotType === 'NO_PERM';
+            const isNoPerm = slot.slotType === 'NO_PERM';
             const isDouble = slot.slotType === 'DOUBLE_PERM';
             const stats = presenceStats.get(slot.id);
 
@@ -85,7 +86,7 @@ export function SlotGrid({ week, children, isEditable, onToggleSlotType }: SlotG
                       }}
                       onClick={() => onToggleSlotType(slot)}
                     >
-                      {isClosed && <><ShieldBan size={16} /> Fermé</>}
+                      {isClosed && <><ShieldBan size={16} /> {isNoPerm ? 'Pas de perm' : 'Fermé'}</>}
                       {!isClosed && (
                         <>
                           {isDouble && <><Users size={16} /> Double Perm</>}
@@ -98,7 +99,7 @@ export function SlotGrid({ week, children, isEditable, onToggleSlotType }: SlotG
                       className="btn btn-primary"
                       style={{ justifyContent: 'center', cursor: 'default', fontWeight: 600, padding: '0.5rem', height: 'auto', opacity: isClosed ? 0.7 : 1 }}
                     >
-                      {isClosed && 'Fermé'}
+                      {isClosed && (isNoPerm ? 'Pas de perm' : 'Fermé')}
                       {!isClosed && week.status === 'PUBLISHED' && (
                         <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                           {slot.assignments && slot.assignments.length > 0 

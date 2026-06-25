@@ -62,7 +62,7 @@ export default function ParentDashboard() {
       const initialAvails: Record<string, SlotStatus> = {};
       (planningRes.data.slots || []).forEach((s: Slot) => {
         const isEnrolled = child.defaultPresences?.some(dp => dp.dayOfWeek === s.dayOfWeek && dp.halfDay === s.halfDay) ?? true;
-        if (s.slotType !== 'CLOSED' && isEnrolled) {
+        if (s.slotType !== 'CLOSED' && s.slotType !== 'NO_PERM' && isEnrolled) {
           const avail = s.availabilities?.find(a => a.child.id === child.id);
           const presence = s.childPresences?.find(p => p.child.id === child.id);
           const isMarkedAbsent = presence && !presence.isPresent;
