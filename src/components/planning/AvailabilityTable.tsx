@@ -96,7 +96,7 @@ export function AvailabilityTable({ week, children, onNotifyParent }: Availabili
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                       <span className="badge badge-error">En attente</span>
-                      {child.parent?.id && (
+                      {child.parent?.id && week.status === 'OPEN_TO_PARENTS' && (
                         <button 
                           onClick={() => onNotifyParent(child.parent?.id, child.parent?.firstName)}
                           title="Envoyer un rappel par email"
