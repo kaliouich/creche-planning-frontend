@@ -1,4 +1,5 @@
 import { Baby } from 'lucide-react';
+import { ScoreGauge } from './ScoreGauge';
 
 interface Child {
   id: string;
@@ -13,6 +14,11 @@ interface ChildSelectorProps {
 }
 
 export function ChildSelector({ childrenList, onSelect }: ChildSelectorProps) {
+  const scores = childrenList.map(c => c.score || 0);
+  const minScore = scores.length > 0 ? Math.min(...scores) : 0;
+  const maxScore = scores.length > 0 ? Math.max(...scores) : 0;
+  const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+
   return (
     <>
       <div className="no-print" style={{ marginBottom: '2rem', textAlign: 'center' }}>
@@ -20,7 +26,7 @@ export function ChildSelector({ childrenList, onSelect }: ChildSelectorProps) {
         <h1>Espace Parent</h1>
         <p style={{ color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>Veuillez sélectionner le prénom de votre enfant pour remplir le planning.</p>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', maxWidth: '600px', margin: '0 auto', backgroundColor: 'var(--color-bg-secondary)', padding: '0.8rem', borderRadius: 'var(--radius-md)' }}>
-          <strong>💡 Astuce :</strong> Le badge sous le prénom indique votre statut <strong>pour la prochaine semaine à planifier</strong>. Si vous êtes "En Perm", l'algorithme vous sollicitera très probablement. Si vous êtes "En Relâche", vous serez exempté(e) d'assignation automatique (mais vous pouvez toujours proposer votre aide !).
+          <strong>💡 Astuce :</strong> La jauge sous le prénom indique votre statut <strong>par rapport au reste du groupe</strong>. Si vous êtes "En retard", l'algorithme vous sollicitera très probablement. Si vous êtes "En avance", vous serez exempté(e) d'assignation automatique (mais vous pouvez toujours proposer votre aide !).
         </p>
       </div>
 
@@ -42,9 +48,12 @@ export function ChildSelector({ childrenList, onSelect }: ChildSelectorProps) {
               <strong style={{ fontSize: '1.2rem', zIndex: 1 }}>{child.firstName}</strong>
               <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', zIndex: 1 }}>{child.lastName}</span>
               {child.score !== undefined && (
-                <span className={`badge ${child.score >= 0 ? 'badge-success' : 'badge-warning'}`} style={{ marginTop: '0.5rem', zIndex: 1, backgroundColor: child.score >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)', color: child.score >= 0 ? 'var(--color-success)' : 'var(--color-secondary)', border: `1px solid ${child.score >= 0 ? 'var(--color-success)' : 'var(--color-secondary)'}` }}>
-                  {child.score >= 0 ? `☕ En relâche (${child.score.toFixed(2)})` : `🟩 En Perm (${child.score.toFixed(2)})`}
-                </span>
+                <ScoreGauge 
+                  score={child.score}
+                  minScore={minScore}
+                  maxScore={maxScore}
+                  avgScore={avgScore}
+                />
               )}
             </button>
           ))}
