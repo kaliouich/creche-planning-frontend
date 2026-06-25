@@ -9,7 +9,7 @@ export interface UserMeta {
   firstName: string;
   lastName: string;
   email: string;
-  role: 'ADMIN' | 'PROFESSIONAL' | 'PARENT';
+  role: 'ADMIN' | 'PARENT';
 }
 
 export interface Child {

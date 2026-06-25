@@ -37,8 +37,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const userMeta = JSON.parse(localStorage.getItem('userMeta') || '{}');
-  const isPro = userMeta.role === 'PROFESSIONAL';
+
 
   const upcomingWeeks = useMemo(() => {
     const weeksList = [];
@@ -173,7 +172,6 @@ export default function AdminDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1>Espace Coordinateur</h1>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          {!isPro && (
             <button 
               className="btn btn-outline" 
               onClick={() => navigate('/admin/gestion-perms')}
@@ -181,7 +179,6 @@ export default function AdminDashboard() {
               <ClipboardList size={20} />
               Gestion Perms
             </button>
-          )}
           <button 
             className="btn btn-outline" 
             onClick={() => navigate('/admin/children')}
@@ -295,7 +292,7 @@ export default function AdminDashboard() {
               </button>
 
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {(!isPro || week.status === 'PREPARATION') && NEXT_STATUS[week.status] && (
+                {NEXT_STATUS[week.status] && (
                   <button 
                     id={`advance-${week.id}`}
                     className="btn btn-primary" 
@@ -309,7 +306,7 @@ export default function AdminDashboard() {
                   </button>
                 )}
                 
-                {!isPro && week.status === 'OPEN_TO_PARENTS' && (
+                {week.status === 'OPEN_TO_PARENTS' && (
                   <button 
                     id={`generate-${week.id}`}
                     className={`btn ${week.needsRecalculation ? 'btn-primary' : 'btn-outline'}`}

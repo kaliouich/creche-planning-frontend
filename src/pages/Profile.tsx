@@ -60,7 +60,7 @@ export default function Profile() {
           </div>
           <div>
             <h2 style={{ marginBottom: 0 }}>Mon Profil</h2>
-            <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>{name} ({role === 'PROFESSIONAL' ? 'PRO' : role})</p>
+            <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>{name} ({role})</p>
           </div>
         </div>
 

@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 
 describe('Tests Unitaires de Sécurité', () => {
   it('devrait valider la structure des rôles', () => {
-    const roles = ['ADMIN', 'PROFESSIONAL', 'PARENT'];
+    const roles = ['ADMIN', 'PARENT'];
     expect(roles).toContain('ADMIN');
-    expect(roles.length).toBe(3);
+    expect(roles.length).toBe(2);
   });
   
   it('devrait simuler le filtrage des enfants', () => {

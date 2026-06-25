@@ -155,7 +155,7 @@ function App() {
               path="/admin/weeks/:id" 
               element={
                 !user ? <Navigate to="/login" /> :
-                (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <WeekDetails /> :
+                user.role === 'ADMIN' ? <WeekDetails /> :
                 <Navigate to="/" />
               } 
             />
@@ -179,7 +179,7 @@ function App() {
               path="/profile" 
               element={
                 !user ? <Navigate to="/login" /> :
-                (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <Profile /> :
+                user.role === 'ADMIN' ? <Profile /> :
                 <Navigate to="/" />
               } 
             />

@@ -18,7 +18,7 @@ export default function UsersManagement() {
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState<'ADMIN' | 'PROFESSIONAL'>('PROFESSIONAL');
+  const [role, setRole] = useState<'ADMIN'>('ADMIN');
 
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
@@ -70,7 +70,7 @@ export default function UsersManagement() {
     setEmail('');
     setFirstName('');
     setLastName('');
-    setRole('PROFESSIONAL');
+    setRole('ADMIN');
     setShowModal(true);
   };
 
@@ -79,7 +79,7 @@ export default function UsersManagement() {
     setEmail(user.email);
     setFirstName(user.firstName);
     setLastName(user.lastName);
-    setRole(user.role as 'ADMIN' | 'PROFESSIONAL');
+    setRole(user.role as 'ADMIN');
     setShowModal(true);
   };
 
@@ -121,8 +121,8 @@ export default function UsersManagement() {
                 <td style={{ padding: '1rem' }}>{u.firstName} {u.lastName}</td>
                 <td style={{ padding: '1rem' }}>{u.email}</td>
                 <td style={{ padding: '1rem' }}>
-                  <span className={`badge badge-${u.role === 'ADMIN' ? 'error' : u.role === 'PROFESSIONAL' ? 'warning' : 'info'}`}>
-                    {u.role === 'PROFESSIONAL' ? 'PRO' : u.role}
+                  <span className={`badge badge-${u.role === 'ADMIN' ? 'error' : 'info'}`}>
+                    {u.role}
                   </span>
                 </td>
                 <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
@@ -171,7 +171,6 @@ export default function UsersManagement() {
               <div className="form-group">
                 <label className="form-label"><Shield size={16} /> Rôle</label>
                 <select className="form-control" value={role} onChange={e => setRole(e.target.value as any)} required>
-                  <option value="PROFESSIONAL">Pro (Professionnel)</option>
                   <option value="ADMIN">Administrateur</option>
                 </select>
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginTop: '0.5rem' }}>
