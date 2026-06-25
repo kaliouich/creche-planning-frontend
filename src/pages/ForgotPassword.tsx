@@ -28,18 +28,18 @@ export default function ForgotPassword() {
 
   return (
     <div className="login-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="card" style={{ maxWidth: 400, width: '100%' }}>
+      <div className="glass-card" style={{ maxWidth: 400, width: '100%' }}>
         <h1 className="h2" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Mot de passe oublié</h1>
         <p style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--gray-600)' }}>
           Entrez votre adresse e-mail pour recevoir un lien de réinitialisation.
         </p>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Adresse e-mail</label>
+            <label htmlFor="email" className="form-label">Adresse e-mail</label>
             <input
               type="email"
               id="email"
-              className="input"
+              className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

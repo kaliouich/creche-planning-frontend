@@ -47,7 +47,7 @@ export default function ResetPassword() {
 
   return (
     <div className="login-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="card" style={{ maxWidth: 400, width: '100%' }}>
+      <div className="glass-card" style={{ maxWidth: 400, width: '100%' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <img src="/planning/logo.png" alt="Les Fruits de la Passion" style={{ height: '80px', objectFit: 'contain', margin: '0 auto', display: 'block', marginBottom: '1rem' }} />
         </div>
@@ -57,11 +57,11 @@ export default function ResetPassword() {
         </p>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="password">Nouveau mot de passe</label>
+            <label htmlFor="password" className="form-label">Nouveau mot de passe</label>
             <input
               type="password"
               id="password"
-              className="input"
+              className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -69,11 +69,11 @@ export default function ResetPassword() {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirmer le mot de passe</label>
+            <label htmlFor="confirmPassword" className="form-label">Confirmer le mot de passe</label>
             <input
               type="password"
               id="confirmPassword"
-              className="input"
+              className="form-input"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
