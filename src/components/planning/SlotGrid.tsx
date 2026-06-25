@@ -67,7 +67,7 @@ export function SlotGrid({ week, children, isEditable, onToggleSlotType }: SlotG
             const slot = week.slots?.find(s => s.dayOfWeek === day && s.halfDay === halfDay);
             if (!slot) return <div key={halfDay}>-</div>;
 
-            const isClosed = slot.slotType === 'CLOSED' || slot.slotType === 'NO_PERM';
+            const isClosed = slot.slotType === 'CLOSED';
             const isNoPerm = slot.slotType === 'NO_PERM';
             const isDouble = slot.slotType === 'DOUBLE_PERM';
             const stats = presenceStats.get(slot.id);
@@ -78,16 +78,16 @@ export function SlotGrid({ week, children, isEditable, onToggleSlotType }: SlotG
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
                   {isEditable ? (
                     <button 
-                      className={`btn ${isClosed ? 'btn-outline' : isDouble ? 'btn-primary' : 'btn-outline'}`}
+                      className={`btn ${(isClosed || isNoPerm) ? 'btn-outline' : isDouble ? 'btn-primary' : 'btn-outline'}`}
                       style={{ 
                         justifyContent: 'center',
-                        borderColor: isClosed ? 'var(--color-secondary)' : undefined,
-                        color: isClosed ? 'var(--color-secondary)' : undefined,
+                        borderColor: (isClosed || isNoPerm) ? 'var(--color-secondary)' : undefined,
+                        color: (isClosed || isNoPerm) ? 'var(--color-secondary)' : undefined,
                       }}
                       onClick={() => onToggleSlotType(slot)}
                     >
-                      {isClosed && <><ShieldBan size={16} /> {isNoPerm ? 'Pas de perm' : 'Fermé'}</>}
-                      {!isClosed && (
+                      {(isClosed || isNoPerm) && <><ShieldBan size={16} /> {isNoPerm ? 'Pas de perm' : 'Fermé'}</>}
+                      {!(isClosed || isNoPerm) && (
                         <>
                           {isDouble && <><Users size={16} /> Double Perm</>}
                           {!isDouble && 'Normal (1 Parent)'}
@@ -96,11 +96,11 @@ export function SlotGrid({ week, children, isEditable, onToggleSlotType }: SlotG
                     </button>
                   ) : (
                     <div 
-                      className="btn btn-primary"
-                      style={{ justifyContent: 'center', cursor: 'default', fontWeight: 600, padding: '0.5rem', height: 'auto', opacity: isClosed ? 0.7 : 1 }}
+                      className={`btn ${(isClosed || isNoPerm) ? 'btn-outline' : isDouble ? 'btn-primary' : 'btn-outline'}`}
+                      style={{ justifyContent: 'center', cursor: 'default', fontWeight: 600, padding: '0.5rem', height: 'auto', opacity: (isClosed || isNoPerm) ? 0.7 : 1 }}
                     >
-                      {isClosed && (isNoPerm ? 'Pas de perm' : 'Fermé')}
-                      {!isClosed && week.status === 'PUBLISHED' && (
+                      {(isClosed || isNoPerm) && (isNoPerm ? 'Pas de perm' : 'Fermé')}
+                      {!(isClosed || isNoPerm) && week.status === 'PUBLISHED' && (
                         <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                           {slot.assignments && slot.assignments.length > 0 
                             ? slot.assignments.map((a, index) => {
@@ -117,7 +117,7 @@ export function SlotGrid({ week, children, isEditable, onToggleSlotType }: SlotG
                             : '✗ Non rempli'}
                         </div>
                       )}
-                      {!isClosed && week.status !== 'PUBLISHED' && (
+                      {!(isClosed || isNoPerm) && week.status !== 'PUBLISHED' && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           {isDouble ? <Users size={16} /> : <ShieldBan size={16} style={{ opacity: 0 }} />}
                           {slot.assignments && slot.assignments.length > 0 

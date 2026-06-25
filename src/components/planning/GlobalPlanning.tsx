@@ -53,7 +53,7 @@ export function GlobalPlanning({
     if (!globalPlanning || globalPlanning.status !== 'PUBLISHED') return stats;
 
     (globalPlanning.slots || []).forEach(slot => {
-      const isClosed = slot.slotType === 'CLOSED' || slot.slotType === 'NO_PERM';
+      const isClosed = slot.slotType === 'CLOSED';
       if (isClosed) return;
 
       const declaredAbsents = (slot.childPresences || [])
@@ -189,7 +189,7 @@ export function GlobalPlanning({
                           : '✗ Non rempli'}
                       </div>
                     )}
-                    {!isClosed && globalPlanning.status !== 'PUBLISHED' && (
+                    {!(isClosed || isNoPerm) && globalPlanning.status !== 'PUBLISHED' && (
                       <>
                         {isDouble ? 'Double Perm (à définir)' : 'Normal (à définir)'}
                       </>
