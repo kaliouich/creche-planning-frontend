@@ -31,6 +31,7 @@ export interface ParentInfo {
   firstName: string;
   lastName: string;
   email?: string;
+  secondId?: string | null;
   secondEmail?: string | null;
 }
 

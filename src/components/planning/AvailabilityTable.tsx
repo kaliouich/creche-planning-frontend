@@ -5,7 +5,7 @@ import { DAYS, DAY_LABELS, HALF_DAYS } from '../../types';
 interface AvailabilityTableProps {
   week: Week;
   children: Child[];
-  onNotifyParent: (parentId?: string, parentName?: string) => void;
+  onNotifyParent: (parentId?: string, secondId?: string | null, parentName?: string) => void;
 }
 
 export function AvailabilityTable({ week, children, onNotifyParent }: AvailabilityTableProps) {
@@ -98,7 +98,7 @@ export function AvailabilityTable({ week, children, onNotifyParent }: Availabili
                       <span className="badge badge-error">En attente</span>
                       {child.parent?.id && week.status === 'OPEN_TO_PARENTS' && (
                         <button 
-                          onClick={() => onNotifyParent(child.parent?.id, child.parent?.firstName)}
+                          onClick={() => onNotifyParent(child.parent?.id, child.parent?.secondId, child.parent?.firstName)}
                           title="Envoyer un rappel par email"
                           style={{ 
                             background: 'none', border: 'none', cursor: 'pointer', 

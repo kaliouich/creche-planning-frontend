@@ -78,11 +78,16 @@ export default function WeekDetails() {
     }
   };
 
-  const handleNotifyParent = async (parentId?: string, parentName?: string) => {
-    if (!parentId) return;
+  const handleNotifyParent = async (parentId?: string, secondId?: string | null, parentName?: string) => {
+    if (!parentId && !secondId) return;
     try {
-      await apiClient.post(`/users/${parentId}/notify`);
-      showToast(`${parentName} a été notifié.`, 'success');
+      if (parentId) {
+        await apiClient.post(`/users/${parentId}/notify`);
+      }
+      if (secondId) {
+        await apiClient.post(`/users/${secondId}/notify`);
+      }
+      showToast(`Les parents de ${parentName} ont été notifiés.`, 'success');
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { error?: string } } };
