@@ -279,7 +279,8 @@ export default function ChildrenManagement() {
       ageGroup: newChildAgeGroup,
       defaultPresences,
       parent1Email,
-      parent2Email
+      parent2Email,
+      appUrl: window.location.origin + '/planning'
     };
 
     if (!editingChildId && siblingId) {
