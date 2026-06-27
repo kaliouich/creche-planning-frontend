@@ -29,8 +29,8 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
         const slots = planningRes.data.slots || [];
         
         for (const slot of slots) {
-          const assignment = slot.childPresences?.find((cp: any) => cp.child.id === selectedChild.id);
-          if (assignment && assignment.isPresent) {
+          const assignment = slot.assignments?.find((a: any) => a.childId === selectedChild.id || a.child?.id === selectedChild.id);
+          if (assignment) {
             myAssignments.push({
               weekId: week.id,
               weekNumber: week.weekNumber,
@@ -38,7 +38,7 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
               slotId: slot.id,
               dayOfWeek: slot.dayOfWeek,
               halfDay: slot.halfDay,
-              assignmentId: assignment.assignmentId,
+              assignmentId: assignment.id,
               isOfferedForExchange: assignment.isOfferedForExchange || false,
             });
           }
