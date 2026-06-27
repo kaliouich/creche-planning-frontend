@@ -191,9 +191,7 @@ function App() {
             <Route 
               path="/profile" 
               element={
-                !user ? <Navigate to="/login" /> :
-                user.role === 'ADMIN' ? <Profile /> :
-                <Navigate to="/" />
+                !user ? <Navigate to="/login" /> : <Profile />
               } 
             />
           </Routes>
