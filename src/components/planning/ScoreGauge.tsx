@@ -13,7 +13,7 @@ export function ScoreGauge({ score }: ScoreGaugeProps) {
   let bgColor = "rgba(16,185,129,0.1)";
   
   if (score < 0) {
-    statusText = "Vous devez vous inscrire";
+    statusText = "Permanence requise";
     statusColor = "var(--color-error)";
     bgColor = "rgba(244,63,94,0.1)";
   }
