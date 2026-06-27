@@ -59,7 +59,7 @@ export function AvailabilityForm({
 
       <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <h1>Planning de {selectedChild.firstName}</h1>
+          <h1>Panneau de configuration : {selectedChild.firstName}</h1>
           <p style={{ color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             Famille {selectedChild.lastName}
             {selectedChild.score !== undefined && (

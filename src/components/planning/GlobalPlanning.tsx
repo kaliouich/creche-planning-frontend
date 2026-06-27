@@ -96,7 +96,7 @@ export function GlobalPlanning({
     <div className="glass-card" style={{ marginTop: '3rem' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
         <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-          <Calendar size={20} /> Planning Global
+          <Calendar size={20} /> Plannings publiés
         </h3>
         
         <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
