@@ -6,6 +6,7 @@ import { Loader2, ArrowRightLeft, User, Calendar, CheckCircle2 } from 'lucide-re
 import type { Child } from '../types';
 import { DAY_LABELS, HALF_DAY_LABELS } from '../types';
 import { isDatePassed } from '../utils/date';
+import { MyAssignments } from '../components/planning/MyAssignments';
 
 interface ExchangeProposal {
   id: string;
@@ -160,7 +161,11 @@ export default function ExchangeBoard() {
       {error && <div style={{ backgroundColor: 'rgba(244,63,94,0.1)', color: 'var(--color-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '2rem', fontWeight: 500 }}>{error}</div>}
       {success && <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: 'var(--color-success)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500, border: '1px solid var(--color-success)' }}><CheckCircle2 size={24} /> {success}</div>}
 
-      <div style={{ display: 'grid', gap: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))' }}>
+      {myChildren.map(c => (
+        <MyAssignments key={c.id} selectedChild={c} />
+      ))}
+
+      <div style={{ display: 'grid', gap: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', marginTop: '2rem' }}>
         {/* Mes offres */}
         <div className="glass-card" style={{ padding: '1.5rem' }}>
           <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>Mes permanences proposées</h2>

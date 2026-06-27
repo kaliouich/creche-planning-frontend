@@ -5,7 +5,6 @@ import { Loader2, CheckCircle2 } from 'lucide-react';
 import { ChildSelector } from '../components/planning/ChildSelector';
 import { GlobalPlanning } from '../components/planning/GlobalPlanning';
 import { AvailabilityForm } from '../components/planning/AvailabilityForm';
-import { MyAssignments } from '../components/planning/MyAssignments';
 import type { Child, Week, Slot, SlotStatus } from '../types';
 import { DAYS, DAY_LABELS, HALF_DAYS, HALF_DAY_LABELS } from '../types';
 
@@ -220,8 +219,6 @@ export default function ParentDashboard() {
         HALF_DAYS={HALF_DAYS}
         HALF_DAY_LABELS={HALF_DAY_LABELS}
       />
-      
-      <MyAssignments selectedChild={selectedChild} />
     </>
   );
 }
