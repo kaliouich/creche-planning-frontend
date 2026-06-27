@@ -47,7 +47,11 @@ export default function ParentDashboard() {
     }
   });
 
+  const { data: currentUserRes } = useQuery({ queryKey: ['profile'], queryFn: () => apiClient.get('/profile') });
+  const currentUser = currentUserRes?.data;
+
   const childrenList = initData?.childrenList || [];
+  const myChildren = childrenList.filter(c => c.parentId === currentUser?.id || c.parent?.secondId === currentUser?.id);
   const availableGlobalWeeks = initData?.globalWeeks || [];
   const availableFormWeeks = initData?.formWeeks || [];
 
@@ -170,7 +174,7 @@ export default function ParentDashboard() {
   if (!selectedChild) {
     return (
       <div className="animate-fade-in">
-        <ChildSelector childrenList={childrenList} onSelect={handleSelectChild} />
+        <ChildSelector childrenList={myChildren} onSelect={handleSelectChild} />
 
         <GlobalPlanning 
           availableGlobalWeeks={availableGlobalWeeks}

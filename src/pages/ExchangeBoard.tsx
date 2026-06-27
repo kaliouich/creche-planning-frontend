@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { Loader2, ArrowRightLeft, User, Calendar, CheckCircle2 } from 'lucide-react';
-import { ChildSelector } from '../components/planning/ChildSelector';
+
 import type { Child } from '../types';
 import { DAY_LABELS, HALF_DAY_LABELS } from '../types';
 
@@ -134,15 +134,9 @@ export default function ExchangeBoard() {
   const offers = offersData || [];
   const myOffers = offers.filter(o => o.offeringParentId === currentUser?.id);
   const otherOffers = offers.filter(o => o.offeringParentId !== currentUser?.id);
+  const myChildren = childrenList.filter(c => c.parentId === currentUser?.id || c.parent?.secondId === currentUser?.id);
 
-  if (!selectedChild && childrenList.length > 0) {
-    return (
-      <div className="container animate-fade-in">
-        <ChildSelector childrenList={childrenList} onSelect={setSelectedChild} />
-      </div>
-    );
-  }
-
+  // We will ask for the child only when needed later, let's show the board first!
   return (
     <div className="container animate-fade-in" style={{ padding: '2rem 1rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
@@ -243,6 +237,23 @@ export default function ExchangeBoard() {
                     <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
                       <p style={{ fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: 500 }}>Vous voulez cette permanence ?</p>
                       
+                      {myChildren.length > 1 && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <label style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>Pour quel enfant ?</label>
+                          <select 
+                            className="form-control" 
+                            style={{ width: '100%', fontSize: '0.9rem', padding: '0.4rem' }}
+                            value={selectedChild?.id || ''}
+                            onChange={(e) => setSelectedChild(myChildren.find(c => c.id === e.target.value) || null)}
+                          >
+                            <option value="">-- Sélectionnez un enfant --</option>
+                            {myChildren.map((c: any) => (
+                              <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
                       {childAssignments && childAssignments.length > 0 && (
                         <div style={{ marginBottom: '1rem' }}>
                           <label style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>Proposer un troc avec l'une de vos permanences :</label>
@@ -261,14 +272,17 @@ export default function ExchangeBoard() {
                       )}
 
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-primary" style={{ flex: 1, padding: '0.4rem', fontSize: '0.9rem' }} disabled={takeOfferMutation.isPending} onClick={() => {
+                        <button className="btn btn-primary" style={{ flex: 1, padding: '0.4rem', fontSize: '0.9rem' }} disabled={takeOfferMutation.isPending || !selectedChild} onClick={() => {
                           takeOfferMutation.mutate({ childId: selectedChild!.id, offeredAssignmentId: offeredAssignmentId || undefined });
                         }}>Confirmer</button>
                         <button className="btn btn-outline" style={{ padding: '0.4rem', fontSize: '0.9rem' }} onClick={() => { setTakingOfferId(null); setOfferedAssignmentId(''); }}>Annuler</button>
                       </div>
                     </div>
                   ) : (
-                    <button className="btn btn-primary" style={{ marginTop: '1rem', width: '100%', padding: '0.4rem', fontSize: '0.9rem' }} onClick={() => setTakingOfferId(offer.id)}>
+                    <button className="btn btn-primary" style={{ marginTop: '1rem', width: '100%', padding: '0.4rem', fontSize: '0.9rem' }} onClick={() => {
+                      setTakingOfferId(offer.id);
+                      if (myChildren.length === 1) setSelectedChild(myChildren[0]);
+                    }}>
                       Ça m'intéresse
                     </button>
                   )}
