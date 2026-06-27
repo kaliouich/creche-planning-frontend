@@ -32,17 +32,19 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
         for (const slot of slots) {
           const assignment = slot.assignments?.find((a: any) => a.childId === selectedChild.id || a.child?.id === selectedChild.id);
           if (assignment) {
-            myAssignments.push({
-              weekId: week.id,
-              weekNumber: week.weekNumber,
-              year: week.year,
-              slotId: slot.id,
-              dayOfWeek: slot.dayOfWeek,
-              halfDay: slot.halfDay,
-              assignmentId: assignment.id,
-              isOfferedForExchange: assignment.isOfferedForExchange || false,
-              isPassed: isDatePassed(week.weekNumber, week.year, slot.dayOfWeek)
-            });
+            const isPassed = isDatePassed(week.weekNumber, week.year, slot.dayOfWeek);
+            if (!isPassed) {
+              myAssignments.push({
+                weekId: week.id,
+                weekNumber: week.weekNumber,
+                year: week.year,
+                slotId: slot.id,
+                dayOfWeek: slot.dayOfWeek,
+                halfDay: slot.halfDay,
+                assignmentId: assignment.id,
+                isOfferedForExchange: assignment.isOfferedForExchange || false,
+              });
+            }
           }
         }
       }
@@ -83,7 +85,7 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
   return (
     <div className="glass-card no-print" style={{ marginTop: '2rem' }}>
       <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <Calendar size={20} /> Vos Permanences (Validées)
+        <Calendar size={20} /> Vos Permanences (Validées) à venir
       </h3>
       
       {error && <div style={{ backgroundColor: 'rgba(244,63,94,0.1)', color: 'var(--color-secondary)', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.9rem' }}>{error}</div>}
@@ -91,7 +93,7 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
         {assignments.map((a, idx) => (
-          <div key={`${a.weekId}-${a.slotId}-${idx}`} style={{ border: '1px solid var(--color-glass-border)', padding: '1rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-secondary)', opacity: a.isPassed ? 0.6 : 1 }}>
+          <div key={`${a.weekId}-${a.slotId}-${idx}`} style={{ border: '1px solid var(--color-glass-border)', padding: '1rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-secondary)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
               <div>
                 <strong style={{ display: 'block', fontSize: '1.1rem' }}>Semaine {a.weekNumber}</strong>
@@ -99,10 +101,9 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
                   {DAY_LABELS[a.dayOfWeek]} {HALF_DAY_LABELS[a.halfDay]}
                 </span>
               </div>
-              {a.isPassed && <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>Passée</span>}
             </div>
             
-            {a.isPassed ? null : a.isOfferedForExchange ? (
+            {a.isOfferedForExchange ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontSize: '0.9rem', backgroundColor: 'var(--color-bg-tertiary)', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
                 <ArrowRightLeft size={16} /> <span>En cours d'échange (voir Bourse)</span>
               </div>
