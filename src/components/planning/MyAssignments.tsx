@@ -4,6 +4,7 @@ import { apiClient } from '../../api/client';
 import { Calendar, Loader2, ArrowRightLeft } from 'lucide-react';
 import type { Child, Week } from '../../types';
 import { DAY_LABELS, HALF_DAY_LABELS } from '../../types';
+import { isDatePassed } from '../../utils/date';
 
 interface MyAssignmentsProps {
   selectedChild: Child;
@@ -40,6 +41,7 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
               halfDay: slot.halfDay,
               assignmentId: assignment.id,
               isOfferedForExchange: assignment.isOfferedForExchange || false,
+              isPassed: isDatePassed(week.weekNumber, week.year, slot.dayOfWeek)
             });
           }
         }
@@ -89,7 +91,7 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
         {assignments.map((a, idx) => (
-          <div key={`${a.weekId}-${a.slotId}-${idx}`} style={{ border: '1px solid var(--color-glass-border)', padding: '1rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-secondary)' }}>
+          <div key={`${a.weekId}-${a.slotId}-${idx}`} style={{ border: '1px solid var(--color-glass-border)', padding: '1rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-secondary)', opacity: a.isPassed ? 0.6 : 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
               <div>
                 <strong style={{ display: 'block', fontSize: '1.1rem' }}>Semaine {a.weekNumber}</strong>
@@ -97,9 +99,10 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
                   {DAY_LABELS[a.dayOfWeek]} {HALF_DAY_LABELS[a.halfDay]}
                 </span>
               </div>
+              {a.isPassed && <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>Passée</span>}
             </div>
             
-            {a.isOfferedForExchange ? (
+            {a.isPassed ? null : a.isOfferedForExchange ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontSize: '0.9rem', backgroundColor: 'var(--color-bg-tertiary)', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
                 <ArrowRightLeft size={16} /> <span>En cours d'échange (voir Bourse)</span>
               </div>

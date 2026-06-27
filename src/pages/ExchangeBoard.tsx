@@ -5,6 +5,7 @@ import { Loader2, ArrowRightLeft, User, Calendar, CheckCircle2 } from 'lucide-re
 
 import type { Child } from '../types';
 import { DAY_LABELS, HALF_DAY_LABELS } from '../types';
+import { isDatePassed } from '../utils/date';
 
 interface ExchangeProposal {
   id: string;
@@ -136,8 +137,9 @@ export default function ExchangeBoard() {
   }
 
   const offers = offersData || [];
-  const myOffers = offers.filter(o => o.offeringParentId === currentUser?.id);
-  const otherOffers = offers.filter(o => o.offeringParentId !== currentUser?.id);
+  const validOffers = offers.filter(o => !isDatePassed(o.weekNumber, o.year, o.dayOfWeek));
+  const myOffers = validOffers.filter(o => o.offeringParentId === currentUser?.id);
+  const otherOffers = validOffers.filter(o => o.offeringParentId !== currentUser?.id);
   const myChildren = childrenList.filter(c => c.parentId === currentUser?.id || c.parent?.secondId === currentUser?.id);
 
   // We will ask for the child only when needed later, let's show the board first!
