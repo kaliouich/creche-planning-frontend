@@ -142,8 +142,7 @@ export function ScoreAdjustments() {
         </div>
       </div>
 
-      <div className="card" style={{ overflowX: 'auto', padding: '0', borderRadius: '12px', boxShadow: '0 8px 30px rgba(0,0,0,0.05)' }}>
-        <div style={{ overflowY: 'auto', maxHeight: '70vh' }}>
+      <div className="card" style={{ overflow: 'auto', maxHeight: '75vh', padding: '0', borderRadius: '12px', boxShadow: '0 8px 30px rgba(0,0,0,0.05)' }}>
           <table className="table" style={{ whiteSpace: 'nowrap', borderCollapse: 'separate', borderSpacing: 0, width: '100%' }}>
             <thead>
               <tr>
@@ -289,7 +288,6 @@ export function ScoreAdjustments() {
               )}
             </tbody>
           </table>
-        </div>
       </div>
     </div>
   );
