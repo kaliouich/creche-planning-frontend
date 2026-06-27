@@ -117,8 +117,7 @@ export function ScoreAdjustments() {
     }
   });
 
-  const handleToggle = (childId: string, weekNumber: number, year: number, currentDone: number) => {
-    const newDone = currentDone > 0 ? 0 : 1;
+  const handleToggle = (childId: string, weekNumber: number, year: number, newDone: number) => {
     toggleMutation.mutate({ childId, weekNumber, year, newDone });
   };
 
