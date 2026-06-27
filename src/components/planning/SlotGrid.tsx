@@ -168,11 +168,21 @@ export function SlotGrid({ week, children, isEditable, isManualEditing, manualAs
                         </div>
                       )}
                       {!(isClosed || isNoPerm) && week.status !== 'PUBLISHED' && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          {isDouble ? <Users size={16} /> : <ShieldBan size={16} style={{ opacity: 0 }} />}
+                        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                           {slot.assignments && slot.assignments.length > 0 
-                            ? slot.assignments.map(a => a.parent.firstName).join(' & ')
-                            : 'Non rempli'}
+                            ? slot.assignments.map((a, index) => {
+                                const schedule = index > 0 
+                                  ? '12h00 - 17h00' 
+                                  : (halfDay === 'MORNING' ? '8h00 - 13h00' : '13h45 - 18h45');
+                                return (
+                                  <div key={a.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <span style={{ fontWeight: 600 }}>{a.child?.firstName}</span>
+                                    <span style={{ fontSize: '0.9rem' }}>({a.parent.firstName}{a.parent.lastName ? ` & ${a.parent.lastName}` : ''})</span>
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 'normal', opacity: 0.9 }}>({schedule})</span>
+                                  </div>
+                                );
+                              })
+                            : '✗ Non rempli'}
                         </div>
                       )}
                     </div>
