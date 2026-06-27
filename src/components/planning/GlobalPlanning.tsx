@@ -181,7 +181,8 @@ export function GlobalPlanning({
                                 : (halfDay === 'MORNING' ? '8h00 - 13h00' : '13h45 - 18h45');
                               return (
                                 <div key={a.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                  <span>{a.parent.firstName} {a.parent.lastName}</span>
+                                  <span style={{ fontWeight: 600 }}>{a.child?.firstName}</span>
+                                  <span style={{ fontSize: '0.9rem' }}>({a.parent.firstName}{a.parent.lastName ? ` & ${a.parent.lastName}` : ''})</span>
                                   <span style={{ fontSize: '0.8rem', fontWeight: 'normal', opacity: 0.9 }}>({schedule})</span>
                                 </div>
                               );

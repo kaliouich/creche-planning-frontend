@@ -1,0 +1,1 @@
+var e=[`MONDAY`,`TUESDAY`,`WEDNESDAY`,`THURSDAY`,`FRIDAY`],t={MONDAY:`Lundi`,TUESDAY:`Mardi`,WEDNESDAY:`Mercredi`,THURSDAY:`Jeudi`,FRIDAY:`Vendredi`},n=[`MORNING`,`AFTERNOON`],r={MORNING:`Matin`,AFTERNOON:`Après-midi`};export{r as i,t as n,n as r,e as t};

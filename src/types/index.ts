@@ -44,11 +44,13 @@ export interface DefaultPresence {
 
 // ─── Planning Entities ───────────────────────────────────────
 
+export type WeekStatus = 'PREPARATION' | 'OPEN_TO_PARENTS' | 'CALCULATION' | 'PUBLISHED';
+
 export interface Week {
   id: string;
   weekNumber: number;
   year: number;
-  status: 'PREPARATION' | 'OPEN_TO_PARENTS' | 'PUBLISHED';
+  status: WeekStatus;
   needsRecalculation?: boolean;
   hasAssignments?: boolean;
   createdAt?: string;

@@ -1,11 +1,48 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { Pencil, Check, X, Info, Calendar, User } from 'lucide-react';
 
 // useNavigate removed
 import { apiClient } from '../api/client';
-import { CheckCircle, XCircle, Info, Calendar, User } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 
 import type { Child, Week } from '../types';
+
+function EditableCell({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(value);
+
+  // Update internal state if external value changes
+  useEffect(() => {
+    setVal(value);
+  }, [value]);
+
+  if (editing) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+        <input 
+          type="number" 
+          value={val} 
+          onChange={e => setVal(parseFloat(e.target.value) || 0)}
+          style={{ width: '60px', padding: '0.2rem', textAlign: 'center', borderRadius: '4px', border: '1px solid var(--color-border)' }}
+        />
+        <button onClick={() => { onChange(val); setEditing(false); }} style={{ background: 'none', border: 'none', color: 'var(--color-success)', cursor: 'pointer', padding: '2px' }}>
+          <Check size={18} />
+        </button>
+        <button onClick={() => { setVal(value); setEditing(false); }} style={{ background: 'none', border: 'none', color: 'var(--color-secondary)', cursor: 'pointer', padding: '2px' }}>
+          <X size={18} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.2rem' }} onClick={() => setEditing(true)} title="Modifier le nombre">
+      <span style={{ fontSize: '1.1rem', fontWeight: 600, color: value > 0 ? 'var(--color-success)' : 'inherit' }}>{value}</span>
+      <Pencil size={14} color="var(--color-text-secondary)" />
+    </div>
+  );
+}
 
 interface ChildHistory {
   [key: string]: {
@@ -192,31 +229,14 @@ export function ScoreAdjustments() {
                 </td>
                 {weeks.map((w: Week) => {
                   const key = `${w.year}-${w.weekNumber}`;
-                  const isDone = child.histories[key]?.permanencesDone > 0;
+                  const currentDone = child.histories[key]?.permanencesDone || 0;
+                  
                   return (
                     <td key={w.id} style={{ textAlign: 'center', padding: '1rem', borderBottom: '1px solid var(--color-border)', backgroundColor: 'rgba(0,0,0,0.01)' }}>
-                      <button 
-                        onClick={() => handleToggle(child.id, w.weekNumber, w.year, isDone ? 1 : 0)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          margin: '0 auto',
-                          padding: '0.5rem',
-                          borderRadius: '8px',
-                          transition: 'all 0.2s ease',
-                          backgroundColor: isDone ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.05)',
-                        }}
-                        title={isDone ? "Marquer comme non fait" : "Marquer comme fait"}
-                      >
-                        {isDone ? 
-                          <CheckCircle size={24} color="#22c55e" /> : 
-                          <XCircle size={24} color="#ef4444" opacity={0.5} />
-                        }
-                      </button>
+                      <EditableCell 
+                        value={currentDone} 
+                        onChange={(newVal) => handleToggle(child.id, w.weekNumber, w.year, newVal)} 
+                      />
                     </td>
                   );
                 })}

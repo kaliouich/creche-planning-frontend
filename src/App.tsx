@@ -15,6 +15,7 @@ const UsersManagement = lazy(() => import('./pages/UsersManagement'));
 const Profile = lazy(() => import('./pages/Profile'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const ExchangeBoard = lazy(() => import('./pages/ExchangeBoard'));
 
 // Composant Navbar partagé
 const Navbar = ({ onLogout, user }: { onLogout: () => void, user: { firstName: string; lastName: string; role: string } }) => (
@@ -28,13 +29,16 @@ const Navbar = ({ onLogout, user }: { onLogout: () => void, user: { firstName: s
       </div>
       
       <div className="navbar-actions">
-        {(user.role === 'ADMIN' || user.role === 'PROFESSIONAL') && (
+        {(user.role === 'ADMIN' || user.role === 'PROFESSIONAL' || user.role === 'PARENT') && (
           <Link to="/" className="btn btn-navbar" aria-label="Aller au tableau de bord">Tableau de bord</Link>
+        )}
+        {(user.role === 'PARENT') && (
+          <Link to="/exchange" className="btn btn-navbar" aria-label="Bourse d'échange">Bourse d'échange</Link>
         )}
         {user.role === 'ADMIN' && (
           <Link to="/admin/users" className="btn btn-navbar" aria-label="Gérer les utilisateurs">Utilisateurs</Link>
         )}
-        {(user.role === 'ADMIN' || user.role === 'PROFESSIONAL') && (
+        {(user.role === 'ADMIN' || user.role === 'PROFESSIONAL' || user.role === 'PARENT') && (
           <Link to="/profile" className="btn btn-navbar" aria-label="Voir le profil">Profil</Link>
         )}
         <span className="navbar-user-info" aria-live="polite">
@@ -139,6 +143,15 @@ function App() {
                 !user ? <Navigate to="/login" /> :
                 (user.role === 'ADMIN' || user.role === 'PROFESSIONAL') ? <AdminDashboard /> :
                 <ParentDashboard />
+              } 
+            />
+
+            <Route 
+              path="/exchange" 
+              element={
+                !user ? <Navigate to="/login" /> :
+                (user.role === 'PARENT' || user.role === 'ADMIN') ? <ExchangeBoard /> :
+                <Navigate to="/" />
               } 
             />
 

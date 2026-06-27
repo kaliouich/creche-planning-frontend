@@ -115,16 +115,19 @@ export function AvailabilityForm({
                     const slot = (openWeek.slots || []).find(s => s.dayOfWeek === day && s.halfDay === halfDay);
                     if (!slot) return <div key={halfDay}>-</div>;
 
-                    const isClosed = slot.slotType === 'CLOSED' || slot.slotType === 'NO_PERM';
+                    const isClosed = slot.slotType === 'CLOSED';
                     const isEnrolled = selectedChild.defaultPresences?.some(dp => dp.dayOfWeek === day && dp.halfDay === halfDay) ?? true;
-                    const status = availabilities[slot.id];
+                    
+                    // If the slot is NO_PERM and somehow was saved as AVAILABLE before, map it visually to UNAVAILABLE
+                    const rawStatus = availabilities[slot.id];
+                    const status = (slot.slotType === 'NO_PERM' && rawStatus === 'AVAILABLE') ? 'UNAVAILABLE' : rawStatus;
 
                     return (
                       <div key={slot.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>{HALF_DAY_LABELS[halfDay]}</span>
                         {isClosed ? (
                           <div style={{ padding: '0.5rem', textAlign: 'center', backgroundColor: 'var(--color-glass-border)', borderRadius: 'var(--radius-md)', opacity: 0.5, fontSize: '0.9rem' }}>
-                            {slot.slotType === 'NO_PERM' ? 'Pas de perm' : 'Fermé'}
+                            Fermé
                           </div>
                         ) : !isEnrolled ? (
                           <div style={{ padding: '0.5rem', textAlign: 'center', backgroundColor: 'var(--color-glass-border)', borderRadius: 'var(--radius-md)', opacity: 0.7, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
@@ -142,7 +145,7 @@ export function AvailabilityForm({
                             onClick={() => handleCycleStatus(slot.id)}
                           >
                             {status === 'AVAILABLE' && 'Disponible'}
-                            {status === 'UNAVAILABLE' && 'Indisponible'}
+                            {status === 'UNAVAILABLE' && (slot.slotType === 'NO_PERM' ? 'Aucune perm. requise' : 'Indisponible')}
                             {status === 'ABSENT' && 'Enfant Absent'}
                           </button>
                         )}

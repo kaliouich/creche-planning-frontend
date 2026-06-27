@@ -8,23 +8,25 @@ import type { Week } from '../types';
 const STATUS_LABELS: Record<string, string> = {
   PREPARATION: 'En Préparation',
   OPEN_TO_PARENTS: 'Ouvert aux Parents',
+  CALCULATION: 'Généré (Attente de pub.)',
   PUBLISHED: 'Publié',
 };
 
 const STATUS_BADGE: Record<string, string> = {
   PREPARATION: 'badge-warning',
   OPEN_TO_PARENTS: 'badge-success',
+  CALCULATION: 'badge-primary',
   PUBLISHED: 'badge-success',
 };
 
 const NEXT_STATUS: Record<string, string> = {
   PREPARATION: 'OPEN_TO_PARENTS',
-  OPEN_TO_PARENTS: 'PUBLISHED',
+  CALCULATION: 'PUBLISHED',
 };
 
 const NEXT_STATUS_LABEL: Record<string, string> = {
   PREPARATION: 'Ouvrir aux Parents',
-  OPEN_TO_PARENTS: 'Publier',
+  CALCULATION: 'Publier',
 };
 
 export default function AdminDashboard() {
@@ -298,18 +300,16 @@ export default function AdminDashboard() {
                     className="btn btn-primary" 
                     style={{ flex: 1 }}
                     onClick={() => handleAdvanceStatus(week)}
-                    disabled={week.status === 'OPEN_TO_PARENTS' && !week.hasAssignments}
-                    title={week.status === 'OPEN_TO_PARENTS' && !week.hasAssignments ? "Générez d'abord le planning" : undefined}
                   >
                     <ArrowRight size={18} />
                     {NEXT_STATUS_LABEL[week.status]}
                   </button>
                 )}
                 
-                {week.status === 'OPEN_TO_PARENTS' && (
+                {['OPEN_TO_PARENTS', 'CALCULATION'].includes(week.status) && (
                   <button 
                     id={`generate-${week.id}`}
-                    className={`btn ${week.needsRecalculation ? 'btn-primary' : 'btn-outline'}`}
+                    className={`btn ${week.needsRecalculation || week.status === 'OPEN_TO_PARENTS' ? 'btn-primary' : 'btn-outline'}`}
                     style={{ flex: 1 }}
                     onClick={() => handleGenerate(week.id)}
                     disabled={generating === week.id}

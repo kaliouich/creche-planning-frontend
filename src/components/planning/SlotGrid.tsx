@@ -15,6 +15,9 @@ interface SlotGridProps {
   week: Week;
   children: Child[];
   isEditable: boolean;
+  isManualEditing?: boolean;
+  manualAssignments?: Record<string, string[]>;
+  onManualAssignmentChange?: (slotId: string, childIds: string[]) => void;
   onToggleSlotType: (slot: Slot) => void;
 }
 
@@ -49,7 +52,7 @@ function usePresenceStats(week: Week, children: Child[]): Map<string, PresenceSt
   }, [week.slots, children]);
 }
 
-export function SlotGrid({ week, children, isEditable, onToggleSlotType }: SlotGridProps) {
+export function SlotGrid({ week, children, isEditable, isManualEditing, manualAssignments, onManualAssignmentChange, onToggleSlotType }: SlotGridProps) {
   const presenceStats = usePresenceStats(week, children);
 
   return (
@@ -94,6 +97,52 @@ export function SlotGrid({ week, children, isEditable, onToggleSlotType }: SlotG
                         </>
                       )}
                     </button>
+                  ) : isManualEditing && !(isClosed || isNoPerm) ? (
+                    <div 
+                      className="btn btn-outline"
+                      style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', cursor: 'default', fontWeight: 600, padding: '0.5rem', height: 'auto', borderColor: isDouble ? 'var(--color-primary)' : undefined }}
+                    >
+                      {Array.from({ length: isDouble ? 2 : 1 }).map((_, idx) => {
+                        const currentAssignments = manualAssignments?.[slot.id] || [];
+                        const selectedChildId = currentAssignments[idx] || '';
+
+                        return (
+                          <select 
+                            key={idx}
+                            value={selectedChildId}
+                            onChange={(e) => {
+                              if (onManualAssignmentChange) {
+                                const newVal = [...currentAssignments];
+                                if (e.target.value === '') {
+                                  newVal.splice(idx, 1);
+                                } else {
+                                  newVal[idx] = e.target.value;
+                                }
+                                onManualAssignmentChange(slot.id, newVal);
+                              }
+                            }}
+                            style={{ 
+                              width: '100%', 
+                              padding: '0.25rem', 
+                              borderRadius: 'var(--radius-sm)', 
+                              border: '1px solid var(--color-glass-border)',
+                              background: 'var(--color-glass)',
+                              color: 'var(--color-text)'
+                            }}
+                          >
+                            <option value="">-- Non assigné --</option>
+                            {children.filter(c => c.isActive).map(child => {
+                              const isAvail = slot.availabilities?.some(a => a.child.id === child.id && a.isAvailable);
+                              return (
+                                <option key={child.id} value={child.id} style={{ fontWeight: isAvail ? 'bold' : 'normal' }}>
+                                  {child.firstName} {isAvail ? ' (Dispo)' : ''}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        );
+                      })}
+                    </div>
                   ) : (
                     <div 
                       className={`btn ${(isClosed || isNoPerm) ? 'btn-outline' : isDouble ? 'btn-primary' : 'btn-outline'}`}
@@ -109,7 +158,8 @@ export function SlotGrid({ week, children, isEditable, onToggleSlotType }: SlotG
                                   : (halfDay === 'MORNING' ? '8h00 - 13h00' : '13h45 - 18h45');
                                 return (
                                   <div key={a.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                    <span>{a.parent.firstName} {a.parent.lastName}</span>
+                                    <span style={{ fontWeight: 600 }}>{a.child?.firstName}</span>
+                                    <span style={{ fontSize: '0.9rem' }}>({a.parent.firstName}{a.parent.lastName ? ` & ${a.parent.lastName}` : ''})</span>
                                     <span style={{ fontSize: '0.8rem', fontWeight: 'normal', opacity: 0.9 }}>({schedule})</span>
                                   </div>
                                 );

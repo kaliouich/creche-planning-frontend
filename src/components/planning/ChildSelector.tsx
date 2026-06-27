@@ -26,7 +26,7 @@ export function ChildSelector({ childrenList, onSelect }: ChildSelectorProps) {
         <h1>Espace Parent</h1>
         <p style={{ color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>Veuillez sélectionner le prénom de votre enfant pour remplir le planning.</p>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', maxWidth: '600px', margin: '0 auto', backgroundColor: 'var(--color-bg-secondary)', padding: '0.8rem', borderRadius: 'var(--radius-md)' }}>
-          <strong>💡 Astuce :</strong> La jauge sous le prénom indique votre statut <strong>par rapport au reste du groupe</strong>. Si vous êtes "En retard", l'algorithme vous sollicitera très probablement. Si vous êtes "En avance", vous serez exempté(e) d'assignation automatique (mais vous pouvez toujours proposer votre aide !).
+          <strong>💡 Astuce :</strong> Surveillez le statut de votre enfant. S'il est rouge, inscrivez-vous rapidement pour ne pas accumuler de dette.
         </p>
       </div>
 

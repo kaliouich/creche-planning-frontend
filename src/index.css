@@ -104,15 +104,19 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-lg);
-  font-family: inherit;
-  font-weight: 500;
-  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--transition-normal);
   border: none;
   outline: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-primary {
@@ -287,13 +291,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .badge-success {
-  background-color: rgba(16, 185, 129, 0.1);
+  background-color: rgba(182, 193, 19, 0.1);
   color: var(--color-success);
 }
 
 .badge-warning {
   background-color: rgba(245, 158, 11, 0.1);
   color: var(--color-warning);
+}
+
+.badge-primary {
+  background-color: rgba(230, 0, 126, 0.1);
+  color: var(--color-primary);
 }
 
 .only-print {

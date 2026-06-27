@@ -5,6 +5,7 @@ import { Loader2, CheckCircle2 } from 'lucide-react';
 import { ChildSelector } from '../components/planning/ChildSelector';
 import { GlobalPlanning } from '../components/planning/GlobalPlanning';
 import { AvailabilityForm } from '../components/planning/AvailabilityForm';
+import { MyAssignments } from '../components/planning/MyAssignments';
 import type { Child, Week, Slot, SlotStatus } from '../types';
 import { DAYS, DAY_LABELS, HALF_DAYS, HALF_DAY_LABELS } from '../types';
 
@@ -33,7 +34,7 @@ export default function ParentDashboard() {
       
       const childrenList = childrenRes.data as Child[];
       const globalWeeks = weeksRes.data.filter((w: Week) => ['PUBLISHED'].includes(w.status));
-      const formWeeks = weeksRes.data.filter((w: Week) => w.status !== 'PUBLISHED');
+      const formWeeks = weeksRes.data.filter((w: Week) => w.status === 'OPEN_TO_PARENTS');
       
       if (globalWeeks.length > 0 && !selectedGlobalWeekId) {
         setSelectedGlobalWeekId(globalWeeks[0].id);
@@ -62,7 +63,7 @@ export default function ParentDashboard() {
       const initialAvails: Record<string, SlotStatus> = {};
       (planningRes.data.slots || []).forEach((s: Slot) => {
         const isEnrolled = child.defaultPresences?.some(dp => dp.dayOfWeek === s.dayOfWeek && dp.halfDay === s.halfDay) ?? true;
-        if (s.slotType !== 'CLOSED' && s.slotType !== 'NO_PERM' && isEnrolled) {
+        if (s.slotType !== 'CLOSED' && isEnrolled) {
           const avail = s.availabilities?.find(a => a.child.id === child.id);
           const presence = s.childPresences?.find(p => p.child.id === child.id);
           const isMarkedAbsent = presence && !presence.isPresent;
@@ -108,8 +109,13 @@ export default function ParentDashboard() {
 
   const handleCycleStatus = (slotId: string) => {
     setSuccess(''); 
+    const slot = (openWeek?.slots || []).find(s => s.id === slotId);
     setAvailabilities(prev => {
       const current = prev[slotId];
+      if (slot?.slotType === 'NO_PERM') {
+         if (current === 'UNAVAILABLE') return { ...prev, [slotId]: 'ABSENT' };
+         return { ...prev, [slotId]: 'UNAVAILABLE' };
+      }
       if (current === 'UNAVAILABLE') return { ...prev, [slotId]: 'AVAILABLE' };
       if (current === 'AVAILABLE') return { ...prev, [slotId]: 'ABSENT' };
       return { ...prev, [slotId]: 'UNAVAILABLE' };
@@ -205,6 +211,8 @@ export default function ParentDashboard() {
         HALF_DAYS={HALF_DAYS}
         HALF_DAY_LABELS={HALF_DAY_LABELS}
       />
+      
+      <MyAssignments selectedChild={selectedChild} />
     </>
   );
 }
