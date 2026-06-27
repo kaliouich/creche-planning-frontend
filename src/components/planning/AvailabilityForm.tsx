@@ -308,9 +308,10 @@ export function AvailabilityForm({
               <thead>
                 <tr>
                   <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)', textAlign: 'left' }}>Semaine</th>
-                  <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)' }}>Statut (P/R)</th>
-                  <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)' }}>Dette</th>
-                  <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)', textAlign: 'right' }}>Score Cumulé</th>
+                  <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)' }}>Dette (avant)</th>
+                  <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)' }}>Pesée sem.</th>
+                  <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)' }}>Effectué</th>
+                  <th style={{ padding: '0.75rem', borderBottom: '2px solid var(--color-glass-border)', textAlign: 'right' }}>Solde (après)</th>
                 </tr>
               </thead>
               <tbody>
@@ -319,19 +320,22 @@ export function AvailabilityForm({
                     <td style={{ padding: '0.75rem', textAlign: 'left', fontWeight: 500 }}>
                       Semaine {h.weekNumber} <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>({h.year})</span>
                     </td>
+                    <td style={{ padding: '0.75rem', color: h.scoreBefore < 0 ? 'var(--color-secondary)' : 'var(--color-success)' }}>
+                      {h.scoreBefore > 0 ? '+' : ''}{(h.scoreBefore || 0).toFixed(2)}
+                    </td>
+                    <td style={{ padding: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                      {(h.permanencesDue || 0).toFixed(2)}
+                    </td>
                     <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>
                       {h.permanencesDone > 0 ? (
-                        <span style={{ color: 'var(--color-primary)' }}>P ({h.permanencesDone})</span>
+                        <span style={{ color: 'var(--color-primary)' }}>{h.permanencesDone}</span>
                       ) : (
-                        <span style={{ color: 'var(--color-success)' }}>R (Relâche)</span>
+                        <span style={{ color: 'var(--color-success)' }}>0</span>
                       )}
-                    </td>
-                    <td style={{ padding: '0.75rem', color: 'var(--color-secondary)' }}>
-                      -{h.permanencesDue.toFixed(2)}
                     </td>
                     <td style={{ padding: '0.75rem', textAlign: 'right' }}>
                       <span className={`badge ${h.scoreAfter > 0 ? 'badge-success' : h.scoreAfter < 0 ? 'badge-error' : 'badge-warning'}`}>
-                        {h.scoreAfter > 0 ? '+' : ''}{h.scoreAfter.toFixed(2)}
+                        {h.scoreAfter > 0 ? '+' : ''}{(h.scoreAfter || 0).toFixed(2)}
                       </span>
                     </td>
                   </tr>
