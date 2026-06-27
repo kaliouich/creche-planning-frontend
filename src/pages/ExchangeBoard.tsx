@@ -109,6 +109,8 @@ export default function ExchangeBoard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exchange-offers'] });
+      queryClient.invalidateQueries({ queryKey: ['my-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['global-planning'] });
       setSuccess('Le troc a été validé avec succès ! Le planning est mis à jour.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
@@ -123,6 +125,8 @@ export default function ExchangeBoard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exchange-offers'] });
+      queryClient.invalidateQueries({ queryKey: ['my-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['global-planning'] });
       setSuccess('Votre offre a été annulée.');
     }
   });

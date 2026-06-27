@@ -59,7 +59,9 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
     },
     onSuccess: () => {
       setSuccess('Permanence proposée à la bourse d\'échange avec succès !');
-      queryClient.invalidateQueries({ queryKey: ['my-assignments', selectedChild.id] });
+      queryClient.invalidateQueries({ queryKey: ['my-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['exchange-offers'] });
+      queryClient.invalidateQueries({ queryKey: ['global-planning'] });
       setTimeout(() => setSuccess(''), 5000);
     },
     onError: (err: any) => {
