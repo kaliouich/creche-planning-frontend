@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { Loader2, ArrowRightLeft, User, Calendar, CheckCircle2 } from 'lucide-react';
 
@@ -7,34 +7,9 @@ import type { Child } from '../types';
 import { DAY_LABELS, HALF_DAY_LABELS } from '../types';
 import { isDatePassed } from '../utils/date';
 import { MyAssignments } from '../components/planning/MyAssignments';
-
-interface ExchangeProposal {
-  id: string;
-  status: string;
-  proposingParentId: string;
-  proposingParentName: string;
-  offeredAssignmentId: string | null;
-  offeredDayOfWeek: string | null;
-  offeredHalfDay: string | null;
-  createdAt: string;
-}
-
-interface ExchangeOffer {
-  id: string;
-  assignmentId: string;
-  weekId: string;
-  weekNumber: number;
-  year: number;
-  dayOfWeek: string;
-  halfDay: string;
-  offeringParentId: string;
-  offeringParentName: string;
-  createdAt: string;
-  proposals: ExchangeProposal[];
-}
+import { useExchangeOffers, useChildAssignmentsForExchange, useTakeOffer, useCancelOffer, useValidateProposal } from '../hooks/useExchange';
 
 export default function ExchangeBoard() {
-  const queryClient = useQueryClient();
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -55,83 +30,54 @@ export default function ExchangeBoard() {
     }
   });
 
-  const { data: offersData, isLoading } = useQuery({
-    queryKey: ['exchange-offers'],
-    queryFn: async () => {
-      const res = await apiClient.get('/exchange/offers');
-      return res.data.offers as ExchangeOffer[];
-    }
-  });
+  const { data: offersData, isLoading } = useExchangeOffers();
 
-  // Pour proposer un swap, il faut récupérer les assignments de l'enfant sélectionné pour la semaine de l'offre
-  const { data: childAssignments } = useQuery({
-    queryKey: ['child-assignments', selectedChild?.id, takingOfferId],
-    queryFn: async () => {
-      if (!selectedChild || !takingOfferId) return null;
-      const offer = offersData?.find(o => o.id === takingOfferId);
-      if (!offer) return null;
-      const planningRes = await apiClient.get(`/planning/${offer.weekId}`);
-      
-      // On cherche les assignments de notre enfant
-      const assignments: any[] = [];
-      planningRes.data.slots.forEach((s: any) => {
-        const myAssignment = s.assignments?.find((a: any) => a.child.id === selectedChild.id);
-        if (myAssignment && !myAssignment.isOfferedForExchange) {
-          assignments.push({
-            id: myAssignment.id,
-            dayOfWeek: s.dayOfWeek,
-            halfDay: s.halfDay
-          });
+  const { data: childAssignments } = useChildAssignmentsForExchange(selectedChild, takingOfferId, offersData);
+
+  const takeOfferMutation = useTakeOffer();
+  const cancelOfferMutation = useCancelOffer();
+  const validateProposalMutation = useValidateProposal();
+
+  const handleTakeOffer = async () => {
+    if (!takingOfferId || !selectedChild) return;
+    setError('');
+    try {
+      const res = await takeOfferMutation.mutateAsync({
+        takingOfferId,
+        payload: {
+          childId: selectedChild.id,
+          ...(offeredAssignmentId ? { offeredAssignmentId } : {})
         }
       });
-      return assignments;
-    },
-    enabled: !!selectedChild && !!takingOfferId
-  });
-
-  const takeOfferMutation = useMutation({
-    mutationFn: async (payload: { childId: string, offeredAssignmentId?: string }) => {
-      return apiClient.post(`/exchange/offers/${takingOfferId}/take`, payload);
-    },
-    onSuccess: (res: any) => {
-      queryClient.invalidateQueries({ queryKey: ['exchange-offers'] });
       setSuccess(res.data.status === 'ACCEPTED' ? 'Échange validé avec succès !' : 'Votre proposition de troc a été envoyée au parent.');
       setTakingOfferId(null);
       setOfferedAssignmentId('');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    },
-    onError: (err: any) => {
-      setError(err.response?.data?.error || 'Erreur lors de la prise de permanence');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Erreur lors de la prise de la permanence');
     }
-  });
+  };
 
-  const validateProposalMutation = useMutation({
-    mutationFn: async (proposalId: string) => {
-      return apiClient.post(`/exchange/proposals/${proposalId}/validate`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['exchange-offers'] });
-      queryClient.invalidateQueries({ queryKey: ['my-assignments'] });
-      queryClient.invalidateQueries({ queryKey: ['global-planning'] });
-      setSuccess('Le troc a été validé avec succès ! Le planning est mis à jour.');
+  const handleCancelOffer = async (offerId: string) => {
+    if (!window.confirm('Voulez-vous vraiment annuler cette offre ?')) return;
+    try {
+      await cancelOfferMutation.mutateAsync(offerId);
+      setSuccess('Offre annulée avec succès.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    },
-    onError: (err: any) => {
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Erreur lors de l\'annulation');
+    }
+  };
+
+  const handleValidateProposal = async (proposalId: string) => {
+    try {
+      await validateProposalMutation.mutateAsync(proposalId);
+      setSuccess('Proposition validée ! Le planning a été mis à jour.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: any) {
       setError(err.response?.data?.error || 'Erreur lors de la validation');
     }
-  });
-
-  const cancelOfferMutation = useMutation({
-    mutationFn: async (offerId: string) => {
-      return apiClient.delete(`/exchange/offers/${offerId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['exchange-offers'] });
-      queryClient.invalidateQueries({ queryKey: ['my-assignments'] });
-      queryClient.invalidateQueries({ queryKey: ['global-planning'] });
-      setSuccess('Votre offre a été annulée.');
-    }
-  });
+  };
 
   if (isLoading) {
     return <div className="flex-center" style={{ padding: '4rem' }}><Loader2 size={32} className="spin" style={{ color: 'var(--color-primary)' }} /></div>;
@@ -183,9 +129,7 @@ export default function ExchangeBoard() {
                         <Calendar size={14} /> {DAY_LABELS[offer.dayOfWeek]} {HALF_DAY_LABELS[offer.halfDay]}
                       </div>
                     </div>
-                    <button className="btn btn-outline" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', borderColor: 'var(--color-error)', color: 'var(--color-error)' }} onClick={() => {
-                      if (window.confirm("Annuler cette offre ?")) cancelOfferMutation.mutate(offer.id);
-                    }}>Annuler l'offre</button>
+                    <button className="btn btn-outline" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', borderColor: 'var(--color-error)', color: 'var(--color-error)' }} onClick={() => handleCancelOffer(offer.id)}>Annuler l'offre</button>
                   </div>
 
                   {offer.proposals.length > 0 && (
@@ -193,16 +137,16 @@ export default function ExchangeBoard() {
                       <p style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>Propositions reçues :</p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {offer.proposals.map(p => (
-                          <div key={p.id} style={{ backgroundColor: '#fff', padding: '0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
-                            <div style={{ fontSize: '0.85rem', marginBottom: '0.25rem' }}><strong>{p.proposingParentName}</strong> propose :</div>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
+                          <div key={p.id} style={{ padding: '0.75rem', backgroundColor: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)' }}>
+                            <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                              <strong>{p.proposingParentName}</strong> propose :<br />
                               {p.offeredAssignmentId ? (
-                                <span>Un troc contre le <strong style={{ color: 'var(--color-primary)' }}>{DAY_LABELS[p.offeredDayOfWeek!]} {HALF_DAY_LABELS[p.offeredHalfDay!]}</strong> de la semaine {offer.weekNumber}</span>
+                                <span style={{ color: 'var(--color-primary)' }}><ArrowRightLeft size={12} style={{ display: 'inline', marginRight: '4px' }}/> {p.offeredDayOfWeek !== undefined && p.offeredDayOfWeek !== null ? DAY_LABELS[p.offeredDayOfWeek] : ''} {p.offeredHalfDay !== undefined && p.offeredHalfDay !== null ? HALF_DAY_LABELS[p.offeredHalfDay] : ''}</span>
                               ) : (
-                                <span>De prendre la permanence (sans troc)</span>
+                                <span style={{ color: 'var(--color-success)' }}>Aucun retour (Remplacement gratuit)</span>
                               )}
                             </div>
-                            <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', width: '100%' }} onClick={() => validateProposalMutation.mutate(p.id)} disabled={validateProposalMutation.isPending}>
+                            <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', width: '100%' }} onClick={() => handleValidateProposal(p.id)} disabled={validateProposalMutation.isPending}>
                               Accepter et Valider l'échange
                             </button>
                           </div>
@@ -283,9 +227,7 @@ export default function ExchangeBoard() {
                       )}
 
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-primary" style={{ flex: 1, padding: '0.4rem', fontSize: '0.9rem' }} disabled={takeOfferMutation.isPending || !selectedChild} onClick={() => {
-                          takeOfferMutation.mutate({ childId: selectedChild!.id, offeredAssignmentId: offeredAssignmentId || undefined });
-                        }}>Confirmer</button>
+                        <button className="btn btn-primary" style={{ flex: 1, padding: '0.4rem', fontSize: '0.9rem' }} disabled={takeOfferMutation.isPending || !selectedChild} onClick={handleTakeOffer}>Confirmer</button>
                         <button className="btn btn-outline" style={{ padding: '0.4rem', fontSize: '0.9rem' }} onClick={() => { setTakingOfferId(null); setOfferedAssignmentId(''); }}>Annuler</button>
                       </div>
                     </div>

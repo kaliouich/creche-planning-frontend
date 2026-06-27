@@ -42,6 +42,31 @@ export interface DefaultPresence {
   halfDay: string;
 }
 
+export interface ExchangeProposal {
+  id: string;
+  status: string;
+  proposingParentId: string;
+  proposingParentName: string;
+  offeredAssignmentId: string | null;
+  offeredDayOfWeek: string | null;
+  offeredHalfDay: string | null;
+  createdAt: string;
+}
+
+export interface ExchangeOffer {
+  id: string;
+  assignmentId: string;
+  weekId: string;
+  weekNumber: number;
+  year: number;
+  dayOfWeek: string;
+  halfDay: string;
+  offeringParentId: string;
+  offeringParentName: string;
+  createdAt: string;
+  proposals: ExchangeProposal[];
+}
+
 // ─── Planning Entities ───────────────────────────────────────
 
 export type WeekStatus = 'PREPARATION' | 'OPEN_TO_PARENTS' | 'CALCULATION' | 'PUBLISHED';
