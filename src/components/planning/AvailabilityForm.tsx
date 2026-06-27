@@ -64,7 +64,7 @@ export function AvailabilityForm({
             Famille {selectedChild.lastName}
             {selectedChild.score !== undefined && (
               <span className={`badge ${selectedChild.score > 0 ? 'badge-success' : 'badge-warning'}`}>
-                {selectedChild.score > 0 ? `En relâche (${selectedChild.score.toFixed(1)})` : `Actif (${selectedChild.score.toFixed(1)})`}
+                {selectedChild.score > 0 ? `En relâche (${selectedChild.score.toFixed(2)})` : `Actif (${selectedChild.score.toFixed(2)})`}
               </span>
             )}
           </p>
