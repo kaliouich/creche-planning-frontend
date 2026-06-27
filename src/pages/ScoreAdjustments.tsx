@@ -90,9 +90,10 @@ export function ScoreAdjustments() {
           children: old.children.map((child: any) => {
             if (child.id === childId) {
               const key = `${year}-${weekNumber}`;
+              const oldHistory = child.histories[key] || {};
               return {
                 ...child,
-                histories: { ...child.histories, [key]: { permanencesDone: newDone } }
+                histories: { ...child.histories, [key]: { ...oldHistory, permanencesDone: newDone } }
               };
             }
             return child;
@@ -107,16 +108,8 @@ export function ScoreAdjustments() {
       }
       showToast("Erreur lors de l'ajustement de la permanence.", 'error');
     },
-    onSuccess: (response, { childId }) => {
-      queryClient.setQueryData(['matrix'], (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          children: old.children.map((child: any) => 
-            child.id === childId ? { ...child, score: response.data.newScore } : child
-          )
-        };
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['matrix'] });
     }
   });
 
