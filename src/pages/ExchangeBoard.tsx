@@ -73,10 +73,10 @@ export default function ExchangeBoard() {
       // On cherche les assignments de notre enfant
       const assignments: any[] = [];
       planningRes.data.slots.forEach((s: any) => {
-        const assignment = s.childPresences?.find((p: any) => p.child.id === selectedChild.id);
-        if (assignment && assignment.isPresent && !assignment.isOfferedForExchange) {
+        const myAssignment = s.assignments?.find((a: any) => a.child.id === selectedChild.id);
+        if (myAssignment && !myAssignment.isOfferedForExchange) {
           assignments.push({
-            id: assignment.assignmentId || 'dummy',
+            id: myAssignment.id,
             dayOfWeek: s.dayOfWeek,
             halfDay: s.halfDay
           });
