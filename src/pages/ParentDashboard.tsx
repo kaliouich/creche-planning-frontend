@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { Loader2, CheckCircle2 } from 'lucide-react';
@@ -35,13 +35,6 @@ export default function ParentDashboard() {
       const childrenList = childrenRes.data as Child[];
       const globalWeeks = weeksRes.data.filter((w: Week) => ['PUBLISHED'].includes(w.status));
       const formWeeks = weeksRes.data.filter((w: Week) => w.status === 'OPEN_TO_PARENTS');
-      
-      if (globalWeeks.length > 0 && !selectedGlobalWeekId) {
-        setSelectedGlobalWeekId(globalWeeks[0].id);
-      }
-      if (formWeeks.length > 0 && !selectedFormWeekId) {
-        setSelectedFormWeekId(formWeeks[0].id);
-      }
 
       return { childrenList, globalWeeks, formWeeks };
     }
@@ -54,6 +47,18 @@ export default function ParentDashboard() {
   const myChildren = childrenList.filter(c => c.parentId === currentUser?.id || c.parent?.secondId === currentUser?.id);
   const availableGlobalWeeks = initData?.globalWeeks || [];
   const availableFormWeeks = initData?.formWeeks || [];
+
+  useEffect(() => {
+    if (availableGlobalWeeks.length > 0 && !selectedGlobalWeekId) {
+      setSelectedGlobalWeekId(availableGlobalWeeks[0].id);
+    }
+  }, [availableGlobalWeeks, selectedGlobalWeekId]);
+
+  useEffect(() => {
+    if (availableFormWeeks.length > 0 && !selectedFormWeekId) {
+      setSelectedFormWeekId(availableFormWeeks[0].id);
+    }
+  }, [availableFormWeeks, selectedFormWeekId]);
 
   // 2. When a child is selected, fetch the planning specific to their family
   const loadChildPlanning = useCallback(async (child: Child, weekId: string) => {
