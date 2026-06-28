@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
 import { Calendar, Loader2, ArrowRightLeft } from 'lucide-react';
-import type { Child, Week } from '../../types';
+import type { Child } from '../../types';
 import { DAY_LABELS, HALF_DAY_LABELS } from '../../types';
 import { isDatePassed } from '../../utils/date';
 
@@ -18,42 +18,9 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
   const { data: assignments, isLoading } = useQuery({
     queryKey: ['my-assignments', selectedChild.id],
     queryFn: async () => {
-      // 1. Get all published weeks
-      const weeksRes = await apiClient.get('/weeks');
-      const publishedWeeks = weeksRes.data.filter((w: Week) => w.status === 'PUBLISHED');
+      const res = await apiClient.get(`/assignments/my/${selectedChild.id}`);
       
-      const myAssignments = [];
-      
-      // 2. Fetch planning for each published week
-      for (const week of publishedWeeks) {
-        const planningRes = await apiClient.get(`/planning/${week.id}`);
-        const slots = planningRes.data.slots || [];
-        
-        for (const slot of slots) {
-          const assignment = slot.assignments?.find((a: any) => a.childId === selectedChild.id || a.child?.id === selectedChild.id);
-          if (assignment) {
-            const isPassed = isDatePassed(week.weekNumber, week.year, slot.dayOfWeek);
-            if (!isPassed) {
-              myAssignments.push({
-                weekId: week.id,
-                weekNumber: week.weekNumber,
-                year: week.year,
-                slotId: slot.id,
-                dayOfWeek: slot.dayOfWeek,
-                halfDay: slot.halfDay,
-                assignmentId: assignment.id,
-                isOfferedForExchange: assignment.isOfferedForExchange || false,
-              });
-            }
-          }
-        }
-      }
-      
-      return myAssignments.sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year;
-        if (a.weekNumber !== b.weekNumber) return a.weekNumber - b.weekNumber;
-        return 0;
-      });
+      return res.data.filter((a: any) => !isDatePassed(a.weekNumber, a.year, a.dayOfWeek));
     }
   });
 
@@ -92,7 +59,7 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
       {success && <div style={{ backgroundColor: 'rgba(16,185,129,0.1)', color: 'var(--color-success)', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.9rem' }}>{success}</div>}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-        {assignments.map((a, idx) => (
+        {assignments.map((a: any, idx: number) => (
           <div key={`${a.weekId}-${a.slotId}-${idx}`} style={{ border: '1px solid var(--color-glass-border)', padding: '1rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-secondary)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
               <div>

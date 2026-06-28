@@ -60,21 +60,27 @@ export function GlobalPlanning({
         .filter((cp: any) => !cp.isPresent)
         .map((cp: any) => cp.child.id);
         
-      const notEnrolled = childrenList.filter(c => {
+      const notEnrolledIds = new Set<string>();
+      childrenList.forEach(c => {
         const isEnrolled = c.defaultPresences?.some(dp => dp.dayOfWeek === slot.dayOfWeek && dp.halfDay === slot.halfDay);
-        return !isEnrolled;
+        if (!isEnrolled) {
+          notEnrolledIds.add(c.id);
+        }
       });
 
       const absentNames: string[] = [];
       declaredAbsents.forEach((childId: string) => {
         const c = childrenList.find(x => x.id === childId);
-        if (c && !notEnrolled.some(ne => ne.id === c.id)) absentNames.push(c.firstName);
+        if (c && !notEnrolledIds.has(c.id)) absentNames.push(c.firstName);
       });
-      notEnrolled.forEach(c => absentNames.push(c.firstName));
+      childrenList.forEach(c => {
+        if (notEnrolledIds.has(c.id)) absentNames.push(c.firstName);
+      });
       
-      const presentChildren = childrenList
-        .filter(c => !notEnrolled.some(ne => ne.id === c.id))
-        .filter(c => !declaredAbsents.includes(c.id));
+      const declaredAbsentsSet = new Set(declaredAbsents);
+      const presentChildren = childrenList.filter(c => 
+        !notEnrolledIds.has(c.id) && !declaredAbsentsSet.has(c.id)
+      );
         
       stats[slot.id] = {
         grandsPresNames: presentChildren.filter(c => c.ageGroup !== 'PETIT').map(c => c.firstName),
