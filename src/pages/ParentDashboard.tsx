@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
+import { PageLoader } from '../components/ui/PageLoader';
 import { ChildSelector } from '../components/planning/ChildSelector';
 import { GlobalPlanning } from '../components/planning/GlobalPlanning';
 import { AvailabilityForm } from '../components/planning/AvailabilityForm';
@@ -171,7 +172,7 @@ export default function ParentDashboard() {
   };
 
   if (loadingList) {
-    return <div className="flex-center" style={{ padding: '4rem' }}><Loader2 size={32} className="spin" style={{ color: 'var(--color-primary)' }} /></div>;
+    return <PageLoader text="Chargement de vos informations..." />;
   }
 
   // --- VUE 1 : Liste des enfants et Vue Globale ---

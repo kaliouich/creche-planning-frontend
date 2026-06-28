@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
 import { Calendar, Loader2, ArrowRightLeft } from 'lucide-react';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 import type { Child } from '../../types';
 import { DAY_LABELS, HALF_DAY_LABELS } from '../../types';
 import { isDatePassed } from '../../utils/date';
@@ -42,7 +43,7 @@ export function MyAssignments({ selectedChild }: MyAssignmentsProps) {
   });
 
   if (isLoading) {
-    return <div className="flex-center" style={{ padding: '2rem' }}><Loader2 size={24} className="spin" style={{ color: 'var(--color-primary)' }} /></div>;
+    return <div className="flex-center" style={{ padding: '2rem' }}><LoadingSpinner /></div>;
   }
 
   if (!assignments || assignments.length === 0) {

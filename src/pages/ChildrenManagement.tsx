@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { Loader2 } from 'lucide-react';
+import { PageLoader } from '../components/ui/PageLoader';
 import { useToast } from '../contexts/ToastContext';
 import type { Child } from '../types';
 
@@ -60,13 +60,7 @@ export default function ChildrenManagement() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (loading) {
-    return (
-      <div className="flex-center" style={{ padding: '4rem' }}>
-        <Loader2 size={32} className="spin" style={{ color: 'var(--color-primary)' }} />
-      </div>
-    );
-  }
+  if (loading) return <PageLoader text="Chargement des enfants..." />;
 
   return (
     <div className="animate-fade-in">

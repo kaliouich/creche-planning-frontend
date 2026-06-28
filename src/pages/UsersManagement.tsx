@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { Users, Plus, Mail, Shield, AlertTriangle } from 'lucide-react';
+import { Users, Plus, Mail, Shield, AlertTriangle, Pencil, Trash2 } from 'lucide-react';
+import { PageLoader } from '../components/ui/PageLoader';
 import { useToast } from '../contexts/ToastContext';
 
 import type { UserMeta as User } from '../types';
@@ -94,7 +95,7 @@ export default function UsersManagement() {
     deleteMutation.mutate(userToDelete.id);
   };
 
-  if (loading) return <div className="flex-center" style={{ minHeight: '50vh' }}><p>Chargement...</p></div>;
+  if (loading) return <PageLoader text="Chargement des utilisateurs..." />;
 
   return (
     <div className="admin-dashboard fade-in">
@@ -105,37 +106,56 @@ export default function UsersManagement() {
         </button>
       </div>
 
-      <div className="glass-card">
+      <div className="table-responsive" style={{ backgroundColor: 'var(--color-white)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid var(--color-glass-border)' }}>
-              <th style={{ padding: '1rem' }}>Nom</th>
-              <th style={{ padding: '1rem' }}>Email</th>
-              <th style={{ padding: '1rem' }}>Rôle</th>
-              <th style={{ padding: '1rem' }}>Actions</th>
+          <thead style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+            <tr>
+              <th style={{ padding: '1rem', borderBottom: '1px solid var(--color-glass-border)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Nom</th>
+              <th style={{ padding: '1rem', borderBottom: '1px solid var(--color-glass-border)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Email</th>
+              <th style={{ padding: '1rem', borderBottom: '1px solid var(--color-glass-border)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Rôle</th>
+              <th style={{ padding: '1rem', borderBottom: '1px solid var(--color-glass-border)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.map(u => (
-              <tr key={u.id} style={{ borderBottom: '1px solid var(--color-glass-border)' }}>
-                <td style={{ padding: '1rem' }}>{u.firstName} {u.lastName}</td>
-                <td style={{ padding: '1rem' }}>{u.email}</td>
+            {users.map((user: User) => (
+              <tr key={user.id} style={{ borderBottom: '1px solid #f0f0f0', transition: 'background-color var(--transition-fast)' }} className="hover:bg-gray-50">
+                <td style={{ padding: '1rem' }}>{user.firstName} {user.lastName}</td>
+                <td style={{ padding: '1rem', color: 'var(--color-text-secondary)' }}>{user.email}</td>
                 <td style={{ padding: '1rem' }}>
-                  <span className={`badge badge-${u.role === 'ADMIN' ? 'error' : 'info'}`}>
-                    {u.role}
+                  <span style={{ 
+                    padding: '0.25rem 0.75rem', 
+                    borderRadius: '999px', 
+                    fontSize: '0.85rem',
+                    fontWeight: 500,
+                    backgroundColor: user.role === 'ADMIN' ? 'rgba(230, 0, 126, 0.1)' : 'rgba(182, 193, 19, 0.2)',
+                    color: user.role === 'ADMIN' ? 'var(--color-primary)' : 'var(--color-text-primary)'
+                  }}>
+                    {user.role === 'ADMIN' ? 'Administrateur' : 'Parent'}
                   </span>
                 </td>
-                <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
-                  {u.role !== 'PARENT' && (
-                    <button className="btn btn-outline" onClick={() => openEditModal(u)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
-                      Modifier
-                    </button>
-                  )}
-                  {currentUser?.id !== u.id && u.role !== 'PARENT' && (
-                    <button className="btn btn-outline" onClick={() => setUserToDelete(u)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', color: 'var(--color-error)', borderColor: 'var(--color-error)' }}>
-                      Supprimer
-                    </button>
-                  )}
+                <td style={{ padding: '1rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    {user.role !== 'PARENT' && (
+                      <button 
+                        onClick={() => openEditModal(user)}
+                        className="btn btn-outline" 
+                        style={{ padding: '0.4rem', border: 'none', color: 'var(--color-text-secondary)' }}
+                        title="Modifier"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                    )}
+                    {currentUser?.id !== user.id && user.role !== 'PARENT' && (
+                      <button 
+                        onClick={() => setUserToDelete(user)}
+                        className="btn btn-outline" 
+                        style={{ padding: '0.4rem', border: 'none', color: 'var(--color-error)' }}
+                        title="Supprimer"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

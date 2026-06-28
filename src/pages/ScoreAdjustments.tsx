@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { Pencil, Check, X, Info, Calendar, User } from 'lucide-react';
+import { PageLoader } from '../components/ui/PageLoader';
 
 // useNavigate removed
 import { apiClient } from '../api/client';
@@ -118,7 +119,7 @@ export function ScoreAdjustments() {
   };
 
   if (loading) {
-    return <div className="loading">Chargement de la matrice...</div>;
+    return <PageLoader text="Chargement de la matrice..." />;
   }
 
   if (error) {

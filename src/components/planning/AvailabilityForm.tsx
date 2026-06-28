@@ -1,4 +1,5 @@
-import { Calendar, Loader2, Save, ArrowLeft, History } from 'lucide-react';
+import { Calendar, History, ArrowLeft, Save } from 'lucide-react';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { useQuery } from '@tanstack/react-query';
 import { getWeekDateRange, getDateForDayOfWeek } from '../../utils/date';
 import { apiClient } from '../../api/client';
@@ -98,7 +99,7 @@ export function AvailabilityForm({
             <p style={{ fontWeight: 500, marginBottom: '1rem' }}>Aucune semaine n'est actuellement ouverte à la saisie des disponibilités.</p>
           </div>
         ) : loadingGrid || !openWeek.slots ? (
-          <div className="flex-center" style={{ padding: '3rem' }}><Loader2 size={32} className="spin" style={{ color: 'var(--color-primary)' }} /></div>
+          <div className="flex-center" style={{ padding: '3rem' }}><LoadingSpinner size={32} /></div>
         ) : (
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
@@ -163,7 +164,7 @@ export function AvailabilityForm({
                 onClick={handleSubmit}
                 disabled={isSaving}
               >
-                {isSaving ? <><Loader2 size={20} className="spin" /> Enregistrement...</> : <><Save size={20} /> Enregistrer mes disponibilités</>}
+                {isSaving ? <><LoadingSpinner size={20} /> Enregistrement...</> : <><Save size={20} /> Enregistrer mes disponibilités</>}
               </button>
             </div>
           </div>
@@ -299,11 +300,11 @@ export function AvailabilityForm({
         </h3>
         
         {loadingHistory ? (
-          <div className="flex-center" style={{ padding: '2rem' }}><Loader2 size={24} className="spin" style={{ color: 'var(--color-primary)' }} /></div>
+          <div className="flex-center" style={{ padding: '2rem' }}><LoadingSpinner /></div>
         ) : !scoreHistory || scoreHistory.length === 0 ? (
           <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>Aucun historique de score disponible.</p>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="table-responsive">
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', fontSize: '0.9rem' }}>
               <thead>
                 <tr>

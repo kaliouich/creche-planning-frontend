@@ -2,6 +2,7 @@ import { Suspense, lazy, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { PageLoader } from './components/ui/PageLoader';
 import { apiClient } from './api/client';
 import { ToastProvider } from './contexts/ToastContext';
 
@@ -106,9 +107,7 @@ function App() {
 
   if (loading) {
     return (
-      <div className="flex-center" style={{ minHeight: '100vh' }}>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.2rem' }}>Chargement...</p>
-      </div>
+      <PageLoader text="Vérification de la session..." />
     );
   }
 

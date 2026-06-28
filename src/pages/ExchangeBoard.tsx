@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { Loader2, ArrowRightLeft, User, Calendar, CheckCircle2 } from 'lucide-react';
+import { ArrowRightLeft, User, Calendar, CheckCircle2 } from 'lucide-react';
+import { PageLoader } from '../components/ui/PageLoader';
 
 import type { Child } from '../types';
 import { DAY_LABELS, HALF_DAY_LABELS } from '../types';
@@ -80,7 +81,7 @@ export default function ExchangeBoard() {
   };
 
   if (isLoading) {
-    return <div className="flex-center" style={{ padding: '4rem' }}><Loader2 size={32} className="spin" style={{ color: 'var(--color-primary)' }} /></div>;
+    return <PageLoader text="Chargement de la bourse d'échange..." />;
   }
 
   const offers = offersData || [];

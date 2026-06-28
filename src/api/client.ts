@@ -27,7 +27,7 @@ apiClient.interceptors.request.use((config) => {
     const cookies = document.cookie.split(';');
     let csrfToken = '';
     
-    for (let cookie of cookies) {
+    for (const cookie of cookies) {
       const parts = cookie.trim().split('=');
       const name = parts[0];
       const value = parts[1];

@@ -132,7 +132,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary:active {
-  transform: translateY(1px);
+  transform: scale(0.98) translateY(1px);
 }
 
 .btn-outline {
@@ -383,5 +383,61 @@ h1, h2, h3, h4, h5, h6 {
   @page {
     margin: 0.5cm;
     size: A4 portrait;
+  }
+}
+
+/* Animations & Transitions (UI Polish) */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--transition-normal) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp var(--transition-normal) forwards;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Mobile Refinements */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+  .glass-card {
+    padding: 1.25rem;
+  }
+  .navbar-content h1 {
+    font-size: 1.2rem;
+  }
+  .brand {
+    font-size: 1.25rem;
+  }
+  .modal-content {
+    margin: 1rem;
+    padding: 1.5rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  /* Pour scroller les tables si besoin */
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }

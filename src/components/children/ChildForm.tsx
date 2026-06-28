@@ -63,7 +63,7 @@ export function ChildForm({ editingChild, childrenList, onCancelEdit, onSubmit, 
     e.preventDefault();
     const formattedLastName = parent2Name ? `(${parent1Name} & ${parent2Name})` : `(${parent1Name})`;
     
-    let payload: any = {
+    const payload: any = {
       firstName,
       lastName: formattedLastName,
       parent1FirstName: parent1Name,
